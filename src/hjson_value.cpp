@@ -23,122 +23,53 @@ typedef std::vector<Value> ValueVec;
 typedef std::map<std::string, Value> ValueMap;
 
 
-bool operator <(double a, const Value &b) {
-  return a < static_cast<double>(b);
+#define RET_VAL(_T, _O) \
+Value& operator _O(const _T a, const Value &b) { \
+  return Value(a) _O b; \
+} \
+Value& operator _O(const Value &a, const _T b) { \
+  return a _O Value(b); \
 }
 
-
-bool operator <(const Value &a, char b) {
-  return a.to_int64() < b;
+#define RET_BOOL(_T, _O) \
+bool operator _O(const _T a, const Value &b) { \
+  return Value(a) _O b; \
+} \
+bool operator _O(const Value &a, const _T b) { \
+  return a _O Value(b); \
 }
 
+#define HJSON_OP_IMPL_A(_T) \
+RET_VAL(_T, +) \
+RET_BOOL(_T, <) \
+RET_BOOL(_T, >) \
+RET_BOOL(_T, <=) \
+RET_BOOL(_T, >=) \
+RET_BOOL(_T, ==) \
+RET_BOOL(_T, !=)
 
-bool operator <(const Value &a, unsigned char b) {
-  return a.to_int64() < b;
-}
+#define HJSON_OP_IMPL_B(_T) \
+HJSON_OP_IMPL_A(_T) \
+RET_VAL(_T, -) \
+RET_VAL(_T, *) \
+RET_VAL(_T, /) \
+RET_VAL(_T, %)
 
-
-bool operator <(char a, const Value &b) {
-  return a < b.to_int64();
-}
-
-
-bool operator <(unsigned char a, const Value &b) {
-  return a < b.to_int64();
-}
-
-
-bool operator <(const Value &a, short b) {
-  return a.to_int64() < b;
-}
-
-
-bool operator <(const Value &a, unsigned short b) {
-  return a.to_int64() < b;
-}
-
-
-bool operator <(short a, const Value &b) {
-  return a < b.to_int64();
-}
-
-
-bool operator <(unsigned short a, const Value &b) {
-  return a < b.to_int64();
-}
-
-
-bool operator <(int a, const Value &b) {
-  return a < b.to_int64();
-}
-
-
-bool operator <(long a, const Value &b) {
-  return a < b.to_int64();
-}
-
-bool operator <(long long a, const Value &b) {
-  return a < b.to_int64();
-}
-
-
-bool operator >(double a, const Value &b) {
-  return a > static_cast<double>(b);
-}
-
-
-bool operator >(const Value &a, char b) {
-  return a.to_int64() > b;
-}
-
-
-bool operator >(const Value &a, unsigned char b) {
-  return a.to_int64() > b;
-}
-
-
-bool operator >(char a, const Value &b) {
-  return a > b.to_int64();
-}
-
-
-bool operator >(unsigned char a, const Value &b) {
-  return a > b.to_int64();
-}
-
-
-bool operator >(const Value &a, short b) {
-  return a.to_int64() > b;
-}
-
-
-bool operator >(const Value &a, unsigned short b) {
-  return a.to_int64() > b;
-}
-
-
-bool operator >(short a, const Value &b) {
-  return a > b.to_int64();
-}
-
-
-bool operator >(unsigned short a, const Value &b) {
-  return a > b.to_int64();
-}
-
-
-bool operator >(int a, const Value &b) {
-  return a > b.to_int64();
-}
-
-
-bool operator >(long a, const Value &b) {
-  return a > b.to_int64();
-}
-
-bool operator >(long long a, const Value &b) {
-  return a > b.to_int64();
-}
+HJSON_OP_IMPL_A(char*)
+HJSON_OP_IMPL_A(std::string&)
+HJSON_OP_IMPL_B(float)
+HJSON_OP_IMPL_B(double)
+HJSON_OP_IMPL_B(long double)
+HJSON_OP_IMPL_B(char)
+HJSON_OP_IMPL_B(unsigned char)
+HJSON_OP_IMPL_B(short)
+HJSON_OP_IMPL_B(unsigned short)
+HJSON_OP_IMPL_B(int)
+HJSON_OP_IMPL_B(unsigned int)
+HJSON_OP_IMPL_B(long)
+HJSON_OP_IMPL_B(unsigned long)
+HJSON_OP_IMPL_B(long long)
+HJSON_OP_IMPL_B(unsigned long long)
 
 
 class ValueVecMap {
@@ -429,237 +360,177 @@ bool Value::operator!=(bool input) const {
 }
 
 
-bool Value::operator==(double input) const {
-  return operator double() == input;
-}
-
-
-bool Value::operator!=(double input) const {
-  return !(*this == input);
-}
-
-
-bool Value::operator==(int input) const {
-  return (prv->type == Type::Int64 ? prv->i == input : operator double() == input);
-}
-
-
-bool Value::operator!=(int input) const {
-  return !(*this == input);
-}
-
-
-bool Value::operator==(const char *input) const {
-  return !strcmp(operator const char*(), input);
-}
-
-
-bool Value::operator!=(const char *input) const {
-  return !(*this == input);
-}
-
-
-bool Value::operator==(const std::string &input) const {
-  return operator const std::string() == input;
-}
-
-
-bool Value::operator!=(const std::string &input) const {
-  return !(*this == input);
-}
-
-
-bool Value::operator==(const Value &other) const {
-  if (prv->type == Type::Double && other.prv->type == Type::Int64) {
-    return prv->d == other.prv->i;
-  } else if (prv->type == Type::Int64 && other.prv->type == Type::Double) {
-    return prv->i == other.prv->d;
-  }
-
-  if (prv->type != other.prv->type) {
-    return false;
-  }
-
-  switch (prv->type) {
-  case Type::Undefined:
-  case Type::Null:
-    return true;
-  case Type::Bool:
-    return prv->b == other.prv->b;
-  case Type::Double:
-    return prv->d == other.prv->d;
-  case Type::String:
-    return *((std::string*) prv->p) == *((std::string*)other.prv->p);
-  case Type::Vector:
-  case Type::Map:
-    return prv->p == other.prv->p;
-  case Type::Int64:
-    return prv->i == other.prv->i;
-  }
-
-  assert(!"Unknown type");
-
-  return false;
-}
-
-
-bool Value::operator!=(const Value &other) const {
-  return !(*this == other);
-}
-
-
-bool Value::operator>(double input) const {
-  return operator double() > input;
-}
-
-
-bool Value::operator<(double input) const {
-  return operator double() < input;
-}
-
-
-bool Value::operator>(int input) const {
-  return (prv->type == Type::Int64 ? prv->i > input : operator double() > input);
-}
-
-
-bool Value::operator<(int input) const {
-  return (prv->type == Type::Int64 ? prv->i < input : operator double() < input);
-}
-
-
-bool Value::operator>(const char *input) const {
-  return operator const std::string() > input;
-}
-
-
-bool Value::operator<(const char *input) const {
-  return operator const std::string() < input;
-}
-
-
-bool Value::operator>(const std::string &input) const {
-  return operator const std::string() > input;
-}
-
-
-bool Value::operator<(const std::string &input) const {
-  return operator const std::string() < input;
-}
-
-
-bool Value::operator>(const Value &other) const {
-  if (prv->type == Type::Double && other.prv->type == Type::Int64) {
-    return prv->d > other.prv->i;
-  } else if (prv->type == Type::Int64 && other.prv->type == Type::Double) {
-    return prv->i > other.prv->d;
-  }
-
-  if (prv->type != other.prv->type) {
-    throw type_mismatch("The compared values must be of the same type.");
-  }
-
-  switch (prv->type) {
-  case Type::Double:
-    return prv->d > other.prv->d;
-  case Type::Int64:
-    return prv->i > other.prv->i;
-  case Type::String:
-    return *((std::string*)prv->p) > *((std::string*)other.prv->p);
-  default:
-    break;
-  }
-
-  throw type_mismatch("The compared values must be of type DOUBLE or STRING.");
-}
-
-
-bool Value::operator<(const Value &other) const {
-  if (prv->type == Type::Double && other.prv->type == Type::Int64) {
-    return prv->d < other.prv->i;
-  } else if (prv->type == Type::Int64 && other.prv->type == Type::Double) {
-    return prv->i < other.prv->d;
-  }
-
-  if (prv->type != other.prv->type) {
-    throw type_mismatch("The compared values must be of the same type.");
-  }
-
-  switch (prv->type) {
-  case Type::Double:
-    return prv->d < other.prv->d;
-  case Type::Int64:
-    return prv->i < other.prv->i;
-  case Type::String:
-    return *((std::string*)prv->p) < *((std::string*)other.prv->p);
-  default:
-    break;
-  }
-
-  throw type_mismatch("The compared values must be of type DOUBLE or STRING.");
-}
-
-
-double Value::operator+(int input) const {
-  return operator double() + input;
-}
-
-
-double Value::operator+(double input) const {
-  return operator double() + input;
-}
-
-
-std::string Value::operator+(const char *input) const {
-  return operator const std::string() + input;
-}
-
-
-std::string Value::operator+(const std::string &input) const {
-  return operator const std::string() + input;
-}
-
-
-Value Value::operator+(const Value &other) const {
-  if (prv->type == Type::Double && other.prv->type == Type::Int64) {
-    return prv->d + other.prv->i;
-  } else if (prv->type == Type::Int64 && other.prv->type == Type::Double) {
-    return prv->i + other.prv->d;
-  }
-
-  if (prv->type != other.prv->type) {
-    throw type_mismatch("The values must be of the same type for this operation.");
-  }
-
-  switch (prv->type) {
-  case Type::Double:
-    return prv->d + other.prv->d;
-  case Type::Int64:
-    return Value(prv->i + other.prv->i);
-  case Type::String:
-    return *((std::string*)prv->p) + *((std::string*)other.prv->p);
-  default:
-    break;
-  }
-
-  throw type_mismatch("The values must be of type DOUBLE or STRING for this operation.");
-}
-
-
-double Value::operator-(int input) const {
-  return operator double() - input;
-}
-
-
-double Value::operator-(double input) const {
-  return operator double() - input;
-}
-
-
-double Value::operator-(const Value &other) const {
-  return operator double() - other.operator double();
-}
-
+//bool Value::operator==(const char *input) const {
+//  return !strcmp(operator const char*(), input);
+//}
+//
+//
+//bool Value::operator!=(const char *input) const {
+//  return !(*this == input);
+//}
+//
+//
+//bool Value::operator==(const std::string &input) const {
+//  return operator const std::string() == input;
+//}
+//
+//
+//bool Value::operator!=(const std::string &input) const {
+//  return !(*this == input);
+//}
+//
+
+//bool Value::operator==(const Value &other) const {
+//  if (prv->type == Type::Double && other.prv->type == Type::Int64) {
+//    return prv->d == other.prv->i;
+//  } else if (prv->type == Type::Int64 && other.prv->type == Type::Double) {
+//    return prv->i == other.prv->d;
+//  }
+//
+//  if (prv->type != other.prv->type) {
+//    return false;
+//  }
+//
+//  switch (prv->type) {
+//  case Type::Undefined:
+//  case Type::Null:
+//    return true;
+//  case Type::Bool:
+//    return prv->b == other.prv->b;
+//  case Type::Double:
+//    return prv->d == other.prv->d;
+//  case Type::String:
+//    return *((std::string*) prv->p) == *((std::string*)other.prv->p);
+//  case Type::Vector:
+//  case Type::Map:
+//    return prv->p == other.prv->p;
+//  case Type::Int64:
+//    return prv->i == other.prv->i;
+//  }
+//
+//  assert(!"Unknown type");
+//
+//  return false;
+//}
+//
+//
+//bool Value::operator!=(const Value &other) const {
+//  return !(*this == other);
+//}
+//
+//
+//bool Value::operator>(const char *input) const {
+//  return operator const std::string() > input;
+//}
+//
+//
+//bool Value::operator<(const char *input) const {
+//  return operator const std::string() < input;
+//}
+//
+//
+//bool Value::operator>(const std::string &input) const {
+//  return operator const std::string() > input;
+//}
+//
+//
+//bool Value::operator<(const std::string &input) const {
+//  return operator const std::string() < input;
+//}
+//
+//
+//bool Value::operator>(const Value &other) const {
+//  if (prv->type == Type::Double && other.prv->type == Type::Int64) {
+//    return prv->d > other.prv->i;
+//  } else if (prv->type == Type::Int64 && other.prv->type == Type::Double) {
+//    return prv->i > other.prv->d;
+//  }
+//
+//  if (prv->type != other.prv->type) {
+//    throw type_mismatch("The compared values must be of the same type.");
+//  }
+//
+//  switch (prv->type) {
+//  case Type::Double:
+//    return prv->d > other.prv->d;
+//  case Type::Int64:
+//    return prv->i > other.prv->i;
+//  case Type::String:
+//    return *((std::string*)prv->p) > *((std::string*)other.prv->p);
+//  default:
+//    break;
+//  }
+//
+//  throw type_mismatch("The compared values must be of type DOUBLE or STRING.");
+//}
+
+
+//bool Value::operator<(const Value &other) const {
+//  if (prv->type == Type::Double && other.prv->type == Type::Int64) {
+//    return prv->d < other.prv->i;
+//  } else if (prv->type == Type::Int64 && other.prv->type == Type::Double) {
+//    return prv->i < other.prv->d;
+//  }
+//
+//  if (prv->type != other.prv->type) {
+//    throw type_mismatch("The compared values must be of the same type.");
+//  }
+//
+//  switch (prv->type) {
+//  case Type::Double:
+//    return prv->d < other.prv->d;
+//  case Type::Int64:
+//    return prv->i < other.prv->i;
+//  case Type::String:
+//    return *((std::string*)prv->p) < *((std::string*)other.prv->p);
+//  default:
+//    break;
+//  }
+//
+//  throw type_mismatch("The compared values must be of type DOUBLE or STRING.");
+//}
+//
+//
+//std::string Value::operator+(const char *input) const {
+//  return operator const std::string() + input;
+//}
+//
+//
+//std::string Value::operator+(const std::string &input) const {
+//  return operator const std::string() + input;
+//}
+//
+//
+//Value Value::operator+(const Value &other) const {
+//  if (prv->type == Type::Double && other.prv->type == Type::Int64) {
+//    return prv->d + other.prv->i;
+//  } else if (prv->type == Type::Int64 && other.prv->type == Type::Double) {
+//    return prv->i + other.prv->d;
+//  }
+//
+//  if (prv->type != other.prv->type) {
+//    throw type_mismatch("The values must be of the same type for this operation.");
+//  }
+//
+//  switch (prv->type) {
+//  case Type::Double:
+//    return prv->d + other.prv->d;
+//  case Type::Int64:
+//    return Value(prv->i + other.prv->i);
+//  case Type::String:
+//    return *((std::string*)prv->p) + *((std::string*)other.prv->p);
+//  default:
+//    break;
+//  }
+//
+//  throw type_mismatch("The values must be of type DOUBLE or STRING for this operation.");
+//}
+//
+
+//double Value::operator-(const Value &other) const {
+//  return operator double() - other.operator double();
+//}
+//
 
 Value::operator bool() const {
   switch (prv->type)
@@ -692,6 +563,28 @@ Value::operator double() const {
   throw type_mismatch("Must be of type Double or Int64 for that operation.");
 
   return 0.0;
+}
+
+
+Value::operator long long() const {
+  switch (prv->type)
+  {
+  case Type::Double:
+    return static_cast<long long>(prv->d);
+  case Type::Int64:
+    return prv->i;
+  default:
+    break;
+  }
+
+  throw type_mismatch("Must be of type Double or Int64 for that operation.");
+
+  return 0;
+}
+
+
+Value::operator unsigned long long() const {
+  return static_cast<unsigned long long>(operator long long());
 }
 
 
