@@ -194,13 +194,43 @@ Value::Value(bool input)
 }
 
 
+Value::Value(float input)
+  : prv(std::make_shared<ValueImpl>(static_cast<double>(input)))
+{
+}
+
+
 Value::Value(double input)
   : prv(std::make_shared<ValueImpl>(input))
 {
 }
 
 
+Value::Value(long double input)
+  : prv(std::make_shared<ValueImpl>(static_cast<double>(input)))
+{
+}
+
+
+Value::Value(char input)
+  : prv(std::make_shared<ValueImpl>(static_cast<std::int64_t>(input)))
+{
+}
+
+
+Value::Value(unsigned char input)
+  : prv(std::make_shared<ValueImpl>(static_cast<std::int64_t>(input)))
+{
+}
+
+
 Value::Value(short input)
+  : prv(std::make_shared<ValueImpl>(static_cast<std::int64_t>(input)))
+{
+}
+
+
+Value::Value(unsigned short input)
   : prv(std::make_shared<ValueImpl>(static_cast<std::int64_t>(input)))
 {
 }
@@ -212,13 +242,31 @@ Value::Value(int input)
 }
 
 
+Value::Value(unsigned int input)
+  : prv(std::make_shared<ValueImpl>(static_cast<std::int64_t>(input)))
+{
+}
+
+
 Value::Value(long input)
   : prv(std::make_shared<ValueImpl>(static_cast<std::int64_t>(input)))
 {
 }
 
 
+Value::Value(unsigned long input)
+  : prv(std::make_shared<ValueImpl>(static_cast<std::int64_t>(input)))
+{
+}
+
+
 Value::Value(long long input)
+  : prv(std::make_shared<ValueImpl>(static_cast<std::int64_t>(input)))
+{
+}
+
+
+Value::Value(unsigned long long input)
   : prv(std::make_shared<ValueImpl>(static_cast<std::int64_t>(input)))
 {
 }
@@ -360,85 +408,45 @@ bool Value::operator!=(bool input) const {
 }
 
 
-//bool Value::operator==(const char *input) const {
-//  return !strcmp(operator const char*(), input);
-//}
-//
-//
-//bool Value::operator!=(const char *input) const {
-//  return !(*this == input);
-//}
-//
-//
-//bool Value::operator==(const std::string &input) const {
-//  return operator const std::string() == input;
-//}
-//
-//
-//bool Value::operator!=(const std::string &input) const {
-//  return !(*this == input);
-//}
-//
+bool operator==(const Value &a, const Value &b) {
+  if (a.prv->type == Value::Type::Double && b.prv->type == Value::Type::Int64) {
+    return a.prv->d == b.prv->i;
+  } else if (a.prv->type == Value::Type::Int64 && b.prv->type == Value::Type::Double) {
+    return a.prv->i == b.prv->d;
+  }
 
-//bool Value::operator==(const Value &other) const {
-//  if (prv->type == Type::Double && other.prv->type == Type::Int64) {
-//    return prv->d == other.prv->i;
-//  } else if (prv->type == Type::Int64 && other.prv->type == Type::Double) {
-//    return prv->i == other.prv->d;
-//  }
-//
-//  if (prv->type != other.prv->type) {
-//    return false;
-//  }
-//
-//  switch (prv->type) {
-//  case Type::Undefined:
-//  case Type::Null:
-//    return true;
-//  case Type::Bool:
-//    return prv->b == other.prv->b;
-//  case Type::Double:
-//    return prv->d == other.prv->d;
-//  case Type::String:
-//    return *((std::string*) prv->p) == *((std::string*)other.prv->p);
-//  case Type::Vector:
-//  case Type::Map:
-//    return prv->p == other.prv->p;
-//  case Type::Int64:
-//    return prv->i == other.prv->i;
-//  }
-//
-//  assert(!"Unknown type");
-//
-//  return false;
-//}
-//
-//
-//bool Value::operator!=(const Value &other) const {
-//  return !(*this == other);
-//}
-//
-//
-//bool Value::operator>(const char *input) const {
-//  return operator const std::string() > input;
-//}
-//
-//
-//bool Value::operator<(const char *input) const {
-//  return operator const std::string() < input;
-//}
-//
-//
-//bool Value::operator>(const std::string &input) const {
-//  return operator const std::string() > input;
-//}
-//
-//
-//bool Value::operator<(const std::string &input) const {
-//  return operator const std::string() < input;
-//}
-//
-//
+  if (prv->type != other.prv->type) {
+    return false;
+  }
+
+  switch (prv->type) {
+  case Type::Undefined:
+  case Type::Null:
+    return true;
+  case Type::Bool:
+    return prv->b == other.prv->b;
+  case Type::Double:
+    return prv->d == other.prv->d;
+  case Type::String:
+    return *((std::string*) prv->p) == *((std::string*)other.prv->p);
+  case Type::Vector:
+  case Type::Map:
+    return prv->p == other.prv->p;
+  case Type::Int64:
+    return prv->i == other.prv->i;
+  }
+
+  assert(!"Unknown type");
+
+  return false;
+}
+
+
+bool Value::operator!=(const Value &other) const {
+  return !(*this == other);
+}
+
+
 //bool Value::operator>(const Value &other) const {
 //  if (prv->type == Type::Double && other.prv->type == Type::Int64) {
 //    return prv->d > other.prv->i;

@@ -6,6 +6,30 @@
 #include <map>
 #include <stdexcept>
 
+#define HJSON_OP_DECL_VAL(_T, _O) \
+friend Value& operator _O(const _T, const Value&); \
+friend Value& operator _O(const Value&, const _T);
+
+#define HJSON_OP_DECL_BOOL(_T, _O) \
+friend bool operator _O(const _T, const Value&); \
+friend bool operator _O(const Value&, const _T);
+
+#define HJSON_OPERATORS_DECLARATION_A(_T) \
+HJSON_OP_DECL_VAL(_T, +) \
+HJSON_OP_DECL_BOOL(_T, <) \
+HJSON_OP_DECL_BOOL(_T, >) \
+HJSON_OP_DECL_BOOL(_T, <=) \
+HJSON_OP_DECL_BOOL(_T, >=) \
+HJSON_OP_DECL_BOOL(_T, ==) \
+HJSON_OP_DECL_BOOL(_T, !=)
+
+#define HJSON_OPERATORS_DECLARATION_B(_T) \
+HJSON_OPERATORS_DECLARATION_A(_T) \
+HJSON_OP_DECL_VAL(_T, -) \
+HJSON_OP_DECL_VAL(_T, *) \
+HJSON_OP_DECL_VAL(_T, /) \
+HJSON_OP_DECL_VAL(_T, %)
+
 
 namespace Hjson {
 
@@ -111,6 +135,23 @@ public:
   bool operator ==(bool) const;
   bool operator !=(bool) const;
 
+  HJSON_OPERATORS_DECLARATION_A(char*)
+  HJSON_OPERATORS_DECLARATION_A(std::string&)
+  HJSON_OPERATORS_DECLARATION_B(float)
+  HJSON_OPERATORS_DECLARATION_B(double)
+  HJSON_OPERATORS_DECLARATION_B(long double)
+  HJSON_OPERATORS_DECLARATION_B(char)
+  HJSON_OPERATORS_DECLARATION_B(unsigned char)
+  HJSON_OPERATORS_DECLARATION_B(short)
+  HJSON_OPERATORS_DECLARATION_B(unsigned short)
+  HJSON_OPERATORS_DECLARATION_B(int)
+  HJSON_OPERATORS_DECLARATION_B(unsigned int)
+  HJSON_OPERATORS_DECLARATION_B(long)
+  HJSON_OPERATORS_DECLARATION_B(unsigned long)
+  HJSON_OPERATORS_DECLARATION_B(long long)
+  HJSON_OPERATORS_DECLARATION_B(unsigned long long)
+  HJSON_OPERATORS_DECLARATION_B(Value&)
+
   Value& operator =(float);
   Value& operator =(double);
   Value& operator =(long double);
@@ -184,49 +225,6 @@ public:
   std::string to_string() const;
 };
 
-#define HJSON_OPERATORS_DECLARATION_A(_T) \
-Value& operator +(const _T, const Value&); \
-Value& operator +(const Value&, const _T); \
-bool operator <(const _T, const Value&); \
-bool operator <(const Value&, const _T); \
-bool operator >(const _T, const Value&); \
-bool operator >(const Value&, const _T); \
-bool operator <=(const _T, const Value&); \
-bool operator <=(const Value&, const _T); \
-bool operator >=(const _T, const Value&); \
-bool operator >=(const Value&, const _T); \
-bool operator ==(const _T, const Value&); \
-bool operator ==(const Value&, const _T); \
-bool operator !=(const _T, const Value&); \
-bool operator !=(const Value&, const _T);
-
-#define HJSON_OPERATORS_DECLARATION_B(_T) \
-HJSON_OPERATORS_DECLARATION_A(_T) \
-Value& operator -(const _T, const Value&); \
-Value& operator -(const Value&, const _T); \
-Value& operator *(const _T, const Value&); \
-Value& operator *(const Value&, const _T); \
-Value& operator /(const _T, const Value&); \
-Value& operator /(const Value&, const _T); \
-Value& operator %(const _T, const Value&); \
-Value& operator %(const Value&, const _T);
-
-HJSON_OPERATORS_DECLARATION_A(char*)
-HJSON_OPERATORS_DECLARATION_A(std::string&)
-HJSON_OPERATORS_DECLARATION_B(float)
-HJSON_OPERATORS_DECLARATION_B(double)
-HJSON_OPERATORS_DECLARATION_B(long double)
-HJSON_OPERATORS_DECLARATION_B(char)
-HJSON_OPERATORS_DECLARATION_B(unsigned char)
-HJSON_OPERATORS_DECLARATION_B(short)
-HJSON_OPERATORS_DECLARATION_B(unsigned short)
-HJSON_OPERATORS_DECLARATION_B(int)
-HJSON_OPERATORS_DECLARATION_B(unsigned int)
-HJSON_OPERATORS_DECLARATION_B(long)
-HJSON_OPERATORS_DECLARATION_B(unsigned long)
-HJSON_OPERATORS_DECLARATION_B(long long)
-HJSON_OPERATORS_DECLARATION_B(unsigned long long)
-HJSON_OPERATORS_DECLARATION_B(Value&)
 
 class MapProxy : public Value {
   friend class Value;
