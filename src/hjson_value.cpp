@@ -37,7 +37,7 @@ bool operator >(long a, const Value &b) {
   return a > b.to_int64();
 }
 
-bool operator >(std::int64_t a, const Value &b) {
+bool operator >(long long a, const Value &b) {
   return a > b.to_int64();
 }
 
@@ -176,13 +176,13 @@ Value::Value(int input)
 }
 
 
-Value::Value(std::int64_t input)
-  : prv(std::make_shared<ValueImpl>(input))
+Value::Value(long input)
+  : prv(std::make_shared<ValueImpl>(static_cast<std::int64_t>(input)))
 {
 }
 
 
-Value::Value(long input)
+Value::Value(long long input)
   : prv(std::make_shared<ValueImpl>(static_cast<std::int64_t>(input)))
 {
 }
