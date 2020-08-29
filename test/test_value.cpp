@@ -174,6 +174,19 @@ void test_value() {
     assert(val5 == -1);
     assert(val5 < val);
     assert(val5 < 1.0);
+    short i6 = -28;
+    Hjson::Value val6(i6);
+    assert(val6 == i6);
+    assert(-28 == val6);
+    assert(val6 == -28);
+    unsigned short i7 = 29;
+    Hjson::Value val7(i7);
+    assert(val7 == 29);
+    assert(29 == val7);
+    assert(val7 > i6);
+    assert(i6 < val7);
+    assert(val6 < i7);
+    assert(i7 > val6);
   }
 
   {

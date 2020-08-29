@@ -88,8 +88,8 @@ public:
   // The int64 constructor is tagged to avoid ambiguous conversions for the
   // overloaded constructors. Example usage:
   //   Hjson::Value hval(9223372036854775807, Hjson::Int64_tag{});
-  explicit Value(long);
-  explicit Value(long long);
+  Value(long);
+  Value(long long);
   Value(const char*);
   Value(const std::string&);
   Value(Type);
