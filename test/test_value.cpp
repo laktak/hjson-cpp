@@ -161,6 +161,10 @@ void test_value() {
     char i3 = 4;
     Hjson::Value val3(i3);
     assert(val3 == 4);
+    assert(val3 == i3);
+    assert(i3 == val3);
+    assert(!(i3 > val3));
+    assert(!(i3 < val3));
     Hjson::Value val4("-1");
     assert(val4.to_double() == -1);
     assert(val4.to_int64() == -1);

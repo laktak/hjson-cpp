@@ -28,6 +28,11 @@ bool operator >(double a, const Value &b) {
 }
 
 
+bool operator >(short a, const Value &b) {
+  return a > b.to_int64();
+}
+
+
 bool operator >(int a, const Value &b) {
   return a > b.to_int64();
 }
@@ -166,6 +171,12 @@ Value::Value(bool input)
 
 Value::Value(double input)
   : prv(std::make_shared<ValueImpl>(input))
+{
+}
+
+
+Value::Value(short input)
+  : prv(std::make_shared<ValueImpl>(static_cast<std::int64_t>(input)))
 {
 }
 

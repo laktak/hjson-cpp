@@ -84,6 +84,7 @@ public:
   Value();
   Value(bool);
   Value(double);
+  Value(short);
   Value(int);
   // The int64 constructor is tagged to avoid ambiguous conversions for the
   // overloaded constructors. Example usage:
@@ -178,6 +179,7 @@ public:
 };
 
 bool operator >(double a, const Value &b);
+bool operator >(short a, const Value &b);
 bool operator >(int a, const Value &b);
 bool operator >(long a, const Value &b);
 bool operator >(long long a, const Value &b);
