@@ -178,11 +178,31 @@ public:
   std::string to_string() const;
 };
 
-bool operator >(double a, const Value &b);
-bool operator >(short a, const Value &b);
-bool operator >(int a, const Value &b);
-bool operator >(long a, const Value &b);
-bool operator >(long long a, const Value &b);
+bool operator <(double, const Value&);
+bool operator <(const Value &, char);
+bool operator <(const Value &, unsigned char);
+bool operator <(char, const Value &);
+bool operator <(unsigned char, const Value &);
+bool operator <(const Value &, short);
+bool operator <(const Value &, unsigned short);
+bool operator <(short, const Value &);
+bool operator <(unsigned short, const Value &);
+bool operator <(int, const Value &);
+bool operator <(long, const Value &);
+bool operator <(long long, const Value &);
+
+bool operator >(double, const Value&);
+bool operator >(const Value &, char);
+bool operator >(const Value &, unsigned char);
+bool operator >(char, const Value &);
+bool operator >(unsigned char, const Value &);
+bool operator >(const Value &, short);
+bool operator >(const Value &, unsigned short);
+bool operator >(short, const Value &);
+bool operator >(unsigned short, const Value &);
+bool operator >(int, const Value &);
+bool operator >(long, const Value &);
+bool operator >(long long, const Value &);
 
 class MapProxy : public Value {
   friend class Value;

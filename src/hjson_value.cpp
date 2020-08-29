@@ -23,12 +23,106 @@ typedef std::vector<Value> ValueVec;
 typedef std::map<std::string, Value> ValueMap;
 
 
+bool operator <(double a, const Value &b) {
+  return a < static_cast<double>(b);
+}
+
+
+bool operator <(const Value &a, char b) {
+  return a.to_int64() < b;
+}
+
+
+bool operator <(const Value &a, unsigned char b) {
+  return a.to_int64() < b;
+}
+
+
+bool operator <(char a, const Value &b) {
+  return a < b.to_int64();
+}
+
+
+bool operator <(unsigned char a, const Value &b) {
+  return a < b.to_int64();
+}
+
+
+bool operator <(const Value &a, short b) {
+  return a.to_int64() < b;
+}
+
+
+bool operator <(const Value &a, unsigned short b) {
+  return a.to_int64() < b;
+}
+
+
+bool operator <(short a, const Value &b) {
+  return a < b.to_int64();
+}
+
+
+bool operator <(unsigned short a, const Value &b) {
+  return a < b.to_int64();
+}
+
+
+bool operator <(int a, const Value &b) {
+  return a < b.to_int64();
+}
+
+
+bool operator <(long a, const Value &b) {
+  return a < b.to_int64();
+}
+
+bool operator <(long long a, const Value &b) {
+  return a < b.to_int64();
+}
+
+
 bool operator >(double a, const Value &b) {
   return a > static_cast<double>(b);
 }
 
 
+bool operator >(const Value &a, char b) {
+  return a.to_int64() > b;
+}
+
+
+bool operator >(const Value &a, unsigned char b) {
+  return a.to_int64() > b;
+}
+
+
+bool operator >(char a, const Value &b) {
+  return a > b.to_int64();
+}
+
+
+bool operator >(unsigned char a, const Value &b) {
+  return a > b.to_int64();
+}
+
+
+bool operator >(const Value &a, short b) {
+  return a.to_int64() > b;
+}
+
+
+bool operator >(const Value &a, unsigned short b) {
+  return a.to_int64() > b;
+}
+
+
 bool operator >(short a, const Value &b) {
+  return a > b.to_int64();
+}
+
+
+bool operator >(unsigned short a, const Value &b) {
   return a > b.to_int64();
 }
 
