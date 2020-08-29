@@ -23,6 +23,25 @@ typedef std::vector<Value> ValueVec;
 typedef std::map<std::string, Value> ValueMap;
 
 
+bool operator >(double a, const Value &b) {
+  return a > static_cast<double>(b);
+}
+
+
+bool operator >(int a, const Value &b) {
+  return a > b.to_int64();
+}
+
+
+bool operator >(long a, const Value &b) {
+  return a > b.to_int64();
+}
+
+bool operator >(std::int64_t a, const Value &b) {
+  return a > b.to_int64();
+}
+
+
 class ValueVecMap {
 public:
   KeyVec v;
@@ -43,7 +62,7 @@ public:
   ValueImpl();
   ValueImpl(bool);
   ValueImpl(double);
-  ValueImpl(std::int64_t, Int64_tag);
+  explicit ValueImpl(std::int64_t);
   ValueImpl(const std::string&);
   ValueImpl(Type);
   ~ValueImpl();
@@ -70,7 +89,7 @@ Value::ValueImpl::ValueImpl(double input)
 }
 
 
-Value::ValueImpl::ValueImpl(std::int64_t input, Int64_tag)
+Value::ValueImpl::ValueImpl(std::int64_t input)
   : type(Type::Int64),
   i(input)
 {
@@ -152,13 +171,19 @@ Value::Value(double input)
 
 
 Value::Value(int input)
-  : prv(std::make_shared<ValueImpl>(input, Int64_tag{}))
+  : prv(std::make_shared<ValueImpl>(static_cast<std::int64_t>(input)))
 {
 }
 
 
-Value::Value(std::int64_t input, Int64_tag)
-  : prv(std::make_shared<ValueImpl>(input, Int64_tag{}))
+Value::Value(std::int64_t input)
+  : prv(std::make_shared<ValueImpl>(input))
+{
+}
+
+
+Value::Value(long input)
+  : prv(std::make_shared<ValueImpl>(static_cast<std::int64_t>(input)))
 {
 }
 
@@ -505,7 +530,7 @@ Value Value::operator+(const Value &other) const {
   case Type::Double:
     return prv->d + other.prv->d;
   case Type::Int64:
-    return Value(prv->i + other.prv->i, Int64_tag{});
+    return Value(prv->i + other.prv->i);
   case Type::String:
     return *((std::string*)prv->p) + *((std::string*)other.prv->p);
   default:

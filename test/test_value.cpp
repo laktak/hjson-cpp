@@ -177,27 +177,27 @@ void test_value() {
   }
 
   {
-    Hjson::Value val(144115188075855873, Hjson::Int64_tag{});
+    Hjson::Value val(144115188075855873);
     assert(val.type() == Hjson::Value::Type::Int64);
-    assert(val == Hjson::Value(144115188075855873, Hjson::Int64_tag{}));
-    assert(val != Hjson::Value(144115188075855874, Hjson::Int64_tag{}));
+    assert(val == Hjson::Value(144115188075855873));
+    assert(val != Hjson::Value(144115188075855874));
     assert(val.to_int64() == 144115188075855873);
-    val = Hjson::Value(9223372036854775807, Hjson::Int64_tag{});
+    val = Hjson::Value(9223372036854775807);
     assert(val.to_string() == "9223372036854775807");
-    assert(val == Hjson::Value(9223372036854775807, Hjson::Int64_tag{}));
-    assert(val != Hjson::Value(9223372036854775806, Hjson::Int64_tag{}));
+    assert(val == Hjson::Value(9223372036854775807));
+    assert(val != Hjson::Value(9223372036854775806));
     assert(val.to_int64() == 9223372036854775807);
-    assert(val > Hjson::Value(9223372036854775806, Hjson::Int64_tag{}));
+    assert(val > Hjson::Value(9223372036854775806));
     std::int64_t i = 9223372036854775806;
     std::int64_t i2 = 9223372036854775806;
-    Hjson::Value val2(i, Hjson::Int64_tag{});
-    assert(val2 == Hjson::Value(i, Hjson::Int64_tag{}));
+    Hjson::Value val2(i);
+    assert(val2 == Hjson::Value(i));
     assert(val2 != val);
     assert(val2 < val);
     assert(val > val2);
-    assert(val2 < Hjson::Value(9223372036854775807, Hjson::Int64_tag{}));
+    assert(val2 < Hjson::Value(9223372036854775807));
     // Would fail, because val2 returns a double when on the right side of the comparison.
-    // assert(9223372036854775807 > val2);
+    assert(9223372036854775807 > val2);
     assert(9223372036854775807 > val2.to_int64());
     // These two assertions fail in GCC 5.4, which is ok because doubles can
     // only represent integers up to 9007199254000000 (2^53) without precision
@@ -209,8 +209,8 @@ void test_value() {
     Hjson::Value val7("-9223372036854775806");
     assert(val7.to_int64() == -9223372036854775806);
     assert(val7.to_string() == "-9223372036854775806");
-    Hjson::Value val8(-9223372036854775806, Hjson::Int64_tag{});
-    assert(val8 == Hjson::Value(-9223372036854775806, Hjson::Int64_tag{}));
+    Hjson::Value val8(-9223372036854775806);
+    assert(val8 == Hjson::Value(-9223372036854775806));
     assert(val8.to_int64() == -9223372036854775806);
     assert(val8 < val);
     assert(val8 < 1.0);

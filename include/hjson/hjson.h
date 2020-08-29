@@ -88,7 +88,8 @@ public:
   // The int64 constructor is tagged to avoid ambiguous conversions for the
   // overloaded constructors. Example usage:
   //   Hjson::Value hval(9223372036854775807, Hjson::Int64_tag{});
-  Value(std::int64_t, Int64_tag);
+  explicit Value(std::int64_t);
+  explicit Value(long);
   Value(const char*);
   Value(const std::string&);
   Value(Type);
@@ -176,6 +177,10 @@ public:
   std::string to_string() const;
 };
 
+bool operator >(double a, const Value &b);
+bool operator >(int a, const Value &b);
+bool operator >(long a, const Value &b);
+bool operator >(std::int64_t a, const Value &b);
 
 class MapProxy : public Value {
   friend class Value;
