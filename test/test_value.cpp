@@ -172,6 +172,8 @@ void test_value() {
     assert(!(val3 > i3));
     assert(!(i3 < val3));
     assert(!(val3 < i3));
+    i3 = val3;
+    assert(i3 == 4);
     Hjson::Value val4("-1");
     assert(val4.to_double() == -1);
     assert(val4.to_int64() == -1);
@@ -195,6 +197,12 @@ void test_value() {
     assert(!(i6 > val6));
     assert(!(val6 < i6));
     assert(!(i6 < val6));
+    i6 = val6;
+    assert(i6 == -28);
+    i6 = -val6;
+    assert(i6 == 28);
+    i6 = +val6;
+    assert(i6 == -28);
     unsigned short i7 = 29;
     Hjson::Value val7(i7);
     assert(val7 == 29);
@@ -225,6 +233,8 @@ void test_value() {
     assert(!(val9 > i9));
     assert(!(i9 < val9));
     assert(!(val9 < i9));
+    i9 = val9;
+    assert(i9 == 4);
   }
 
   {

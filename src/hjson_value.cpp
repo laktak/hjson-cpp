@@ -660,6 +660,36 @@ Value operator%(const Value &a, const Value &b) {
 }
 
 
+Value Value::operator+() const {
+  switch (prv->type) {
+  case Value::Type::Double:
+    return prv->d;
+  case Value::Type::Int64:
+    return prv->i;
+  default:
+    throw type_mismatch("The value must be of type Double or Int64 for this operation.");
+    break;
+  }
+
+  return *this;
+}
+
+
+Value Value::operator-() const {
+  switch (prv->type) {
+  case Value::Type::Double:
+    return -prv->d;
+  case Value::Type::Int64:
+    return -prv->i;
+  default:
+    throw type_mismatch("The value must be of type Double or Int64 for this operation.");
+    break;
+  }
+
+  return *this;
+}
+
+
 Value& Value::operator+=(const Value &b) {
   if (prv->type == Value::Type::Double && b.prv->type == Value::Type::Int64) {
     prv->d += b.prv->i;

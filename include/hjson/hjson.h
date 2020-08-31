@@ -148,6 +148,8 @@ public:
   HJSON_OPERATORS_DECLARATION_B(unsigned long long)
   HJSON_OPERATORS_DECLARATION_B(Value&)
 
+  Value operator+() const;
+  Value operator-() const;
   Value& operator+=(const Value&);
   Value& operator++();
   Value operator++(int);
