@@ -26,6 +26,10 @@ void test_value() {
     assert(val != false);
     assert(true == (bool) val);
     assert(false != (bool) val);
+    assert(val && val);
+    // The assignment statement must not be performed (short-circuit of ||).
+    assert(val || (val = false));
+    assert(!!val);
     {
       std::stringstream ss;
       ss << val;
@@ -269,6 +273,16 @@ void test_value() {
     Hjson::Value val3(92233720368547758073829419051489548484843823585675828488686.0);
     assert(val1.to_double() == val2.to_double());
     assert(val1.to_double() == val3.to_double());
+  }
+
+  {
+    Hjson::Value val1 = 3;
+    val1 += 1;
+    assert(val1 == 4);
+    assert(++val1 == 5);
+    assert(val1 == 5);
+    assert(val1++ == 5);
+    assert(val1 == 6);
   }
 
   {

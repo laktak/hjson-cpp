@@ -7,8 +7,8 @@
 #include <stdexcept>
 
 #define HJSON_OP_DECL_VAL(_T, _O) \
-friend Value& operator _O(const _T, const Value&); \
-friend Value& operator _O(const Value&, const _T);
+friend Value operator _O(const _T, const Value&); \
+friend Value operator _O(const Value&, const _T);
 
 #define HJSON_OP_DECL_BOOL(_T, _O) \
 friend bool operator _O(const _T, const Value&); \
@@ -32,10 +32,6 @@ HJSON_OP_DECL_VAL(_T, %)
 
 
 namespace Hjson {
-
-
-// Exists only to avoid ambiguous conversions for the Hjson::Value constructors.
-struct Int64_tag {};
 
 
 class type_mismatch : public std::logic_error {
@@ -152,22 +148,11 @@ public:
   HJSON_OPERATORS_DECLARATION_B(unsigned long long)
   HJSON_OPERATORS_DECLARATION_B(Value&)
 
-  Value& operator =(float);
-  Value& operator =(double);
-  Value& operator =(long double);
-  Value& operator =(char);
-  Value& operator =(unsigned char);
-  Value& operator =(short);
-  Value& operator =(unsigned short);
-  Value& operator =(int);
-  Value& operator =(unsigned int);
-  Value& operator =(long);
-  Value& operator =(unsigned long);
-  Value& operator =(long long);
-  Value& operator =(unsigned long long);
-  bool operator !();
+  Value& operator+=(const Value&);
+  Value& operator++();
+  Value operator++(int);
 
-  operator bool() const;
+  explicit operator bool() const;
   operator float() const;
   operator double() const;
   operator long double() const;
