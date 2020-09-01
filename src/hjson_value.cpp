@@ -720,6 +720,13 @@ Value& Value::operator+=(const Value &b) {
 }
 
 
+Value& Value::operator-=(const Value &b) {
+  operator +=(-b);
+
+  return *this;
+}
+
+
 Value& Value::operator++() {
   switch (prv->type) {
   case Value::Type::Double:

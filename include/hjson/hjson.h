@@ -151,6 +151,7 @@ public:
   Value operator+() const;
   Value operator-() const;
   Value& operator+=(const Value&);
+  Value& operator-=(const Value&);
   Value& operator++();
   Value operator++(int);
 
