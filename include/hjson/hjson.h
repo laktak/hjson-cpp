@@ -7,12 +7,12 @@
 #include <stdexcept>
 
 #define HJSON_OP_DECL_VAL(_T, _O) \
-friend Value operator _O(const _T, const Value&); \
-friend Value operator _O(const Value&, const _T);
+friend Value operator _O(_T, const Value&); \
+friend Value operator _O(const Value&, _T);
 
 #define HJSON_OP_DECL_BOOL(_T, _O) \
-friend bool operator _O(const _T, const Value&); \
-friend bool operator _O(const Value&, const _T);
+friend bool operator _O(_T, const Value&); \
+friend bool operator _O(const Value&, _T);
 
 #define HJSON_OPERATORS_DECLARATION_A(_T) \
 HJSON_OP_DECL_VAL(_T, +) \
@@ -131,8 +131,8 @@ public:
   bool operator ==(bool) const;
   bool operator !=(bool) const;
 
-  HJSON_OPERATORS_DECLARATION_A(char*)
-  HJSON_OPERATORS_DECLARATION_A(std::string&)
+  HJSON_OPERATORS_DECLARATION_A(const char*)
+  HJSON_OPERATORS_DECLARATION_A(const std::string&)
   HJSON_OPERATORS_DECLARATION_B(float)
   HJSON_OPERATORS_DECLARATION_B(double)
   HJSON_OPERATORS_DECLARATION_B(long double)
@@ -146,7 +146,7 @@ public:
   HJSON_OPERATORS_DECLARATION_B(unsigned long)
   HJSON_OPERATORS_DECLARATION_B(long long)
   HJSON_OPERATORS_DECLARATION_B(unsigned long long)
-  HJSON_OPERATORS_DECLARATION_B(Value&)
+  HJSON_OPERATORS_DECLARATION_B(const Value&)
 
   Value operator+() const;
   Value operator-() const;
