@@ -660,34 +660,31 @@ Value operator%(const Value &a, const Value &b) {
 }
 
 
-Value Value::operator+() const {
-  switch (prv->type) {
-  case Value::Type::Double:
-    return prv->d;
-  case Value::Type::Int64:
-    return prv->i;
-  default:
-    throw type_mismatch("The value must be of type Double or Int64 for this operation.");
-    break;
-  }
-
-  return *this;
+#define OP_ASS(_O, _T) \
+Value& Value::operator _O(_T b) { \
+  return operator _O(Value(b)); \
 }
 
+#define HJSON_ASS_IMPL(_T) \
+OP_ASS(+=, _T) \
+OP_ASS(-=, _T) \
+OP_ASS(*=, _T) \
+OP_ASS(/=, _T) \
+OP_ASS(%=, _T)
 
-Value Value::operator-() const {
-  switch (prv->type) {
-  case Value::Type::Double:
-    return -prv->d;
-  case Value::Type::Int64:
-    return -prv->i;
-  default:
-    throw type_mismatch("The value must be of type Double or Int64 for this operation.");
-    break;
-  }
-
-  return *this;
-}
+HJSON_ASS_IMPL(float)
+HJSON_ASS_IMPL(double)
+HJSON_ASS_IMPL(long double)
+HJSON_ASS_IMPL(char)
+HJSON_ASS_IMPL(unsigned char)
+HJSON_ASS_IMPL(short)
+HJSON_ASS_IMPL(unsigned short)
+HJSON_ASS_IMPL(int)
+HJSON_ASS_IMPL(unsigned int)
+HJSON_ASS_IMPL(long)
+HJSON_ASS_IMPL(unsigned long)
+HJSON_ASS_IMPL(long long)
+HJSON_ASS_IMPL(unsigned long long)
 
 
 Value& Value::operator+=(const Value &b) {
@@ -722,6 +719,101 @@ Value& Value::operator+=(const Value &b) {
 
 Value& Value::operator-=(const Value &b) {
   operator +=(-b);
+
+  return *this;
+}
+
+
+Value& Value::operator*=(const Value &b) {
+  if (prv->type == Value::Type::Double && b.prv->type == Value::Type::Int64) {
+    prv->d *= b.prv->i;
+  } else if (prv->type == Value::Type::Int64 && b.prv->type == Value::Type::Double) {
+    prv->i *= b.prv->d;
+  } else {
+    if (prv->type != b.prv->type) {
+      throw type_mismatch("The values must be of the same type for this operation.");
+    }
+
+    switch (prv->type) {
+    case Value::Type::Double:
+      prv->d *= b.prv->d;
+      break;
+    case Value::Type::Int64:
+      prv->i *= b.prv->i;
+      break;
+    default:
+      throw type_mismatch("The values must be of type Double or Int64 for this operation.");
+      break;
+    }
+  }
+
+  return *this;
+}
+
+
+Value& Value::operator/=(const Value &b) {
+  if (prv->type == Value::Type::Double && b.prv->type == Value::Type::Int64) {
+    prv->d /= b.prv->i;
+  } else if (prv->type == Value::Type::Int64 && b.prv->type == Value::Type::Double) {
+    prv->i /= b.prv->d;
+  } else {
+    if (prv->type != b.prv->type) {
+      throw type_mismatch("The values must be of the same type for this operation.");
+    }
+
+    switch (prv->type) {
+    case Value::Type::Double:
+      prv->d /= b.prv->d;
+      break;
+    case Value::Type::Int64:
+      prv->i /= b.prv->i;
+      break;
+    default:
+      throw type_mismatch("The values must be of type Double or Int64 for this operation.");
+      break;
+    }
+  }
+
+  return *this;
+}
+
+
+Value& Value::operator%=(const Value &b) {
+  if (prv->type != b.prv->type || prv->type != Value::Type::Int64) {
+    throw type_mismatch("The values must be of the Int64 type for this operation.");
+  }
+
+  prv->i %= b.prv->i;
+
+  return *this;
+}
+
+
+Value Value::operator+() const {
+  switch (prv->type) {
+  case Value::Type::Double:
+    return prv->d;
+  case Value::Type::Int64:
+    return prv->i;
+  default:
+    throw type_mismatch("The value must be of type Double or Int64 for this operation.");
+    break;
+  }
+
+  return *this;
+}
+
+
+Value Value::operator-() const {
+  switch (prv->type) {
+  case Value::Type::Double:
+    return -prv->d;
+  case Value::Type::Int64:
+    return -prv->i;
+  default:
+    throw type_mismatch("The value must be of type Double or Int64 for this operation.");
+    break;
+  }
 
   return *this;
 }

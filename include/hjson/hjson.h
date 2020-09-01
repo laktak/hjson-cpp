@@ -14,6 +14,9 @@ friend Value operator _O(const Value&, _T);
 friend bool operator _O(_T, const Value&); \
 friend bool operator _O(const Value&, _T);
 
+#define HJSON_OP_DECL_ASS(_T, _O) \
+Value& operator _O(_T);
+
 #define HJSON_OPERATORS_DECLARATION_A(_T) \
 HJSON_OP_DECL_VAL(_T, +) \
 HJSON_OP_DECL_BOOL(_T, <) \
@@ -21,14 +24,19 @@ HJSON_OP_DECL_BOOL(_T, >) \
 HJSON_OP_DECL_BOOL(_T, <=) \
 HJSON_OP_DECL_BOOL(_T, >=) \
 HJSON_OP_DECL_BOOL(_T, ==) \
-HJSON_OP_DECL_BOOL(_T, !=)
+HJSON_OP_DECL_BOOL(_T, !=) \
+HJSON_OP_DECL_ASS(_T, +=)
 
 #define HJSON_OPERATORS_DECLARATION_B(_T) \
 HJSON_OPERATORS_DECLARATION_A(_T) \
 HJSON_OP_DECL_VAL(_T, -) \
 HJSON_OP_DECL_VAL(_T, *) \
 HJSON_OP_DECL_VAL(_T, /) \
-HJSON_OP_DECL_VAL(_T, %)
+HJSON_OP_DECL_VAL(_T, %) \
+HJSON_OP_DECL_ASS(_T, -=) \
+HJSON_OP_DECL_ASS(_T, *=) \
+HJSON_OP_DECL_ASS(_T, /=) \
+HJSON_OP_DECL_ASS(_T, %=)
 
 
 namespace Hjson {
@@ -126,7 +134,7 @@ public:
   const Value operator[](const char*) const;
   MapProxy operator[](const char*);
   const Value operator[](int) const;
-  Value &operator[](int);
+  Value& operator[](int);
 
   bool operator ==(bool) const;
   bool operator !=(bool) const;
@@ -150,8 +158,6 @@ public:
 
   Value operator+() const;
   Value operator-() const;
-  Value& operator+=(const Value&);
-  Value& operator-=(const Value&);
   Value& operator++();
   Value operator++(int);
 
