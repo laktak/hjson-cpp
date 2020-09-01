@@ -362,18 +362,18 @@ bool Value::operator!=(bool input) const {
 
 
 #define RET_VAL(_T, _O) \
-Value operator _O(const _T a, const Value &b) { \
+Value operator _O(_T a, const Value &b) { \
   return Value(a) _O b; \
 } \
-Value operator _O(const Value &a, const _T b) { \
+Value operator _O(const Value &a, _T b) { \
   return a _O Value(b); \
 }
 
 #define RET_BOOL(_T, _O) \
-bool operator _O(const _T a, const Value &b) { \
+bool operator _O(_T a, const Value &b) { \
   return Value(a) _O b; \
 } \
-bool operator _O(const Value &a, const _T b) { \
+bool operator _O(const Value &a, _T b) { \
   return a _O Value(b); \
 }
 
@@ -390,24 +390,27 @@ RET_BOOL(_T, !=)
 HJSON_OP_IMPL_A(_T) \
 RET_VAL(_T, -) \
 RET_VAL(_T, *) \
-RET_VAL(_T, /) \
+RET_VAL(_T, /)
+
+#define HJSON_OP_IMPL_C(_T) \
+HJSON_OP_IMPL_B(_T) \
 RET_VAL(_T, %)
 
-HJSON_OP_IMPL_A(char*)
-HJSON_OP_IMPL_A(std::string&)
+HJSON_OP_IMPL_A(const char*)
+HJSON_OP_IMPL_A(const std::string&)
 HJSON_OP_IMPL_B(float)
 HJSON_OP_IMPL_B(double)
 HJSON_OP_IMPL_B(long double)
-HJSON_OP_IMPL_B(char)
-HJSON_OP_IMPL_B(unsigned char)
-HJSON_OP_IMPL_B(short)
-HJSON_OP_IMPL_B(unsigned short)
-HJSON_OP_IMPL_B(int)
-HJSON_OP_IMPL_B(unsigned int)
-HJSON_OP_IMPL_B(long)
-HJSON_OP_IMPL_B(unsigned long)
-HJSON_OP_IMPL_B(long long)
-HJSON_OP_IMPL_B(unsigned long long)
+HJSON_OP_IMPL_C(char)
+HJSON_OP_IMPL_C(unsigned char)
+HJSON_OP_IMPL_C(short)
+HJSON_OP_IMPL_C(unsigned short)
+HJSON_OP_IMPL_C(int)
+HJSON_OP_IMPL_C(unsigned int)
+HJSON_OP_IMPL_C(long)
+HJSON_OP_IMPL_C(unsigned long)
+HJSON_OP_IMPL_C(long long)
+HJSON_OP_IMPL_C(unsigned long long)
 
 
 Value operator+(const Value &a, const Value &b) {
@@ -665,26 +668,29 @@ Value& Value::operator _O(_T b) { \
   return operator _O(Value(b)); \
 }
 
-#define HJSON_ASS_IMPL(_T) \
+#define HJSON_ASS_IMPL_A(_T) \
 OP_ASS(+=, _T) \
 OP_ASS(-=, _T) \
 OP_ASS(*=, _T) \
-OP_ASS(/=, _T) \
+OP_ASS(/=, _T)
+
+#define HJSON_ASS_IMPL_B(_T) \
+HJSON_ASS_IMPL_A(_T) \
 OP_ASS(%=, _T)
 
-HJSON_ASS_IMPL(float)
-HJSON_ASS_IMPL(double)
-HJSON_ASS_IMPL(long double)
-HJSON_ASS_IMPL(char)
-HJSON_ASS_IMPL(unsigned char)
-HJSON_ASS_IMPL(short)
-HJSON_ASS_IMPL(unsigned short)
-HJSON_ASS_IMPL(int)
-HJSON_ASS_IMPL(unsigned int)
-HJSON_ASS_IMPL(long)
-HJSON_ASS_IMPL(unsigned long)
-HJSON_ASS_IMPL(long long)
-HJSON_ASS_IMPL(unsigned long long)
+HJSON_ASS_IMPL_A(float)
+HJSON_ASS_IMPL_A(double)
+HJSON_ASS_IMPL_A(long double)
+HJSON_ASS_IMPL_B(char)
+HJSON_ASS_IMPL_B(unsigned char)
+HJSON_ASS_IMPL_B(short)
+HJSON_ASS_IMPL_B(unsigned short)
+HJSON_ASS_IMPL_B(int)
+HJSON_ASS_IMPL_B(unsigned int)
+HJSON_ASS_IMPL_B(long)
+HJSON_ASS_IMPL_B(unsigned long)
+HJSON_ASS_IMPL_B(long long)
+HJSON_ASS_IMPL_B(unsigned long long)
 
 
 Value& Value::operator+=(const Value &b) {

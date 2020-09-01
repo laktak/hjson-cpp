@@ -263,7 +263,6 @@ void test_value() {
     assert(val2 < val);
     assert(val > val2);
     assert(val2 < Hjson::Value(9223372036854775807));
-    // Would fail, because val2 returns a double when on the right side of the comparison.
     assert(9223372036854775807 > val2);
     assert(9223372036854775807 > val2.to_int64());
     // These two assertions fail in GCC 5.4, which is ok because doubles can
@@ -281,6 +280,39 @@ void test_value() {
     assert(val8.to_int64() == -9223372036854775806);
     assert(val8 < val);
     assert(val8 < 1.0);
+    std::int64_t i3 = 144115188075855873;
+    Hjson::Value val9 = i3;
+    assert(val9 == i3);
+    assert(i3 == val9);
+    assert(!(val9 > i3));
+    assert(!(val9 < i3));
+    assert(!(i3 > val9));
+    assert(!(i3 > val9));
+    assert(val9 >= i3);
+    assert(val9 <= i3);
+    assert(i3 >= val9);
+    assert(i3 >= val9);
+    i3 = val9;
+    assert(i3 == 144115188075855873);
+    std::int64_t i4 = 1;
+    assert(i4 != val9);
+    assert(val9 != i4);
+    assert(val9 + i4 == 144115188075855874);
+    assert(i4 + val9 == 144115188075855874);
+    val9 += i4;
+    assert(val9 == 144115188075855874);
+    assert(val9 - i4 == 144115188075855873);
+    assert(i4 - val9  == -144115188075855873);
+    val9 -= i4;
+    assert(val9 == 144115188075855873);
+    assert(val9 / i4 == val9);
+    assert(i4 / val9 == 0);
+    val9 /= i4;
+    assert(val9 == 144115188075855873);
+    assert(val9 % i4 == 0);
+    assert(i4 % val9 == 1);
+    val9 %= i4;
+    assert(val9 == 0);
   }
 
   {
