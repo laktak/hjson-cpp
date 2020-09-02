@@ -83,6 +83,10 @@ void test_value() {
     assert(3.0 == val);
     assert(4.0 != val);
     double third = val;
+    int fourth = val;
+    assert(fourth == 3);
+    third = static_cast<int>(val);
+    assert(third == 3.0);
     assert(val == 3);
     assert(val != 2);
     assert(3 == val);
@@ -92,6 +96,10 @@ void test_value() {
     assert(val < 4.0);
     assert(4.0 > val);
     assert(val * 3 == 9);
+    third = val * 3;
+    assert(third == 9);
+    third = 3 * val;
+    assert(third == 9);
     assert(3 * val == 9);
     assert(val * 3.0 == 9.0);
     assert(3.0 * val == 9.0);
@@ -100,7 +108,7 @@ void test_value() {
     assert(val / 3.0 == 1.0);
     assert(3.0 / val == 1.0);
     assert(val + 1 == 4);
-    assert(1 + int(val) == 4);
+    assert(1 + val == 4);
     assert(val + 1.0 == 4.0);
     assert(1.0 + val == 4.0);
     assert(val - 1 == 2);
@@ -249,6 +257,7 @@ void test_value() {
     assert(val == Hjson::Value(144115188075855873));
     assert(val != Hjson::Value(144115188075855874));
     assert(val.to_int64() == 144115188075855873);
+    assert(static_cast<std::int64_t>(val) == 144115188075855873);
     val = Hjson::Value(9223372036854775807);
     assert(val.to_string() == "9223372036854775807");
     assert(val == Hjson::Value(9223372036854775807));

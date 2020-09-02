@@ -215,7 +215,9 @@ public:
   size_t erase(const std::string&);
   size_t erase(const char*);
 
-  // These functions throw an error if used on Vector or Map
+  // These functions throw an error if used on Vector or Map, but will return
+  // 0 or 0.0 for the types Undefined and Null. Will parse strings to numbers
+  // and print numbers to strings if necessary.
   double to_double() const;
   std::int64_t to_int64() const;
   std::string to_string() const;

@@ -1272,9 +1272,9 @@ double Value::to_double() const {
   switch (prv->type) {
   case Type::Undefined:
   case Type::Null:
-    return 0;
+    return 0.0;
   case Type::Bool:
-    return (prv->b ? 1 : 0);
+    return (prv->b ? 1.0 : 0.0);
   case Type::Double:
     return prv->d;
   case Type::Int64:
