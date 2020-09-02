@@ -23,8 +23,6 @@ typedef std::vector<Value> ValueVec;
 typedef std::map<std::string, Value> ValueMap;
 
 
-
-
 class ValueVecMap {
 public:
   KeyVec v;
@@ -415,7 +413,7 @@ HJSON_OP_IMPL_C(unsigned long long)
 
 Value operator+(const Value &a, const Value &b) {
   if (a.prv->type == Value::Type::Double && b.prv->type == Value::Type::Int64) {
-    return Value(a.prv->d + b.prv->i);
+    return a.prv->d + b.prv->i;
   } else if (a.prv->type == Value::Type::Int64 && b.prv->type == Value::Type::Double) {
     return a.prv->i + b.prv->d;
   }
