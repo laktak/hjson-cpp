@@ -376,7 +376,6 @@ bool operator _O(const Value &a, _T b) { \
 }
 
 #define HJSON_OP_IMPL_A(_T) \
-RET_VAL(_T, +) \
 RET_BOOL(_T, <) \
 RET_BOOL(_T, >) \
 RET_BOOL(_T, <=) \
@@ -386,6 +385,7 @@ RET_BOOL(_T, !=)
 
 #define HJSON_OP_IMPL_B(_T) \
 HJSON_OP_IMPL_A(_T) \
+RET_VAL(_T, +) \
 RET_VAL(_T, -) \
 RET_VAL(_T, *) \
 RET_VAL(_T, /)
@@ -409,6 +409,26 @@ HJSON_OP_IMPL_C(long)
 HJSON_OP_IMPL_C(unsigned long)
 HJSON_OP_IMPL_C(long long)
 HJSON_OP_IMPL_C(unsigned long long)
+
+
+std::string operator+(const char *a, const Value &b) {
+  return std::string(a) + b.to_string();
+}
+
+
+std::string operator+(const Value &a ,const char *b) {
+  return  a.to_string() + std::string(b);
+}
+
+
+std::string operator+(const std::string &a, const Value &b) {
+  return a + b.to_string();
+}
+
+
+std::string operator+(const Value &a, const std::string &b) {
+  return a.to_string() + b;
+}
 
 
 Value operator+(const Value &a, const Value &b) {
@@ -689,6 +709,22 @@ HJSON_ASS_IMPL_B(long)
 HJSON_ASS_IMPL_B(unsigned long)
 HJSON_ASS_IMPL_B(long long)
 HJSON_ASS_IMPL_B(unsigned long long)
+
+
+Value& Value::operator+=(const char *b) {
+  return operator+=(std::string(b));
+}
+
+
+Value& Value::operator+=(const std::string &b) {
+  if (prv->type != Type::String) {
+    throw type_mismatch("The value must be of type String for this operation.");
+  }
+
+  *((std::string*)prv->p) += b;
+
+  return *this;
+}
 
 
 Value& Value::operator+=(const Value &b) {

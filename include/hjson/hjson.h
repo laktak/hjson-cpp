@@ -18,7 +18,6 @@ friend bool operator _O(const Value&, _T);
 Value& operator _O(_T);
 
 #define HJSON_OPERATORS_DECLARATION_A(_T) \
-HJSON_OP_DECL_VAL(_T, +) \
 HJSON_OP_DECL_BOOL(_T, <) \
 HJSON_OP_DECL_BOOL(_T, >) \
 HJSON_OP_DECL_BOOL(_T, <=) \
@@ -29,6 +28,7 @@ HJSON_OP_DECL_ASS(_T, +=)
 
 #define HJSON_OPERATORS_DECLARATION_B(_T) \
 HJSON_OPERATORS_DECLARATION_A(_T) \
+HJSON_OP_DECL_VAL(_T, +) \
 HJSON_OP_DECL_VAL(_T, -) \
 HJSON_OP_DECL_VAL(_T, *) \
 HJSON_OP_DECL_VAL(_T, /) \
@@ -141,6 +141,11 @@ public:
 
   bool operator ==(bool) const;
   bool operator !=(bool) const;
+
+  friend std::string operator +(const char*, const Value&);
+  friend std::string operator +(const Value&, const char*);
+  friend std::string operator +(const std::string&, const Value&);
+  friend std::string operator +(const Value&, const std::string&);
 
   HJSON_OPERATORS_DECLARATION_A(const char*)
   HJSON_OPERATORS_DECLARATION_A(const std::string&)

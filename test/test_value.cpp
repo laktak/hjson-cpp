@@ -361,6 +361,8 @@ void test_value() {
     assert(_test_string_param(val) == "alpha");
     val = std::string("alpha");
     std::string st = val;
+    assert(st == val);
+    assert(val == st);
     assert(val == val2);
     assert(val2 == std::string("alpha"));
     assert(val2 != std::string("beta"));
@@ -369,6 +371,24 @@ void test_value() {
     assert(val.to_double() == 0);
     assert(val.to_int64() == 0);
     assert(val.to_string() == "alpha");
+    st = val + "beta";
+    assert(st == "alphabeta");
+    val2 = val + "beta";
+    assert(val2 == "alphabeta");
+    val2 = val + std::string("beta");
+    assert(val2 == "alphabeta");
+    val2 = "beta" + val;
+    assert(val2 == "betaalpha");
+    val2 = std::string("beta") + val;
+    assert(val2 == "betaalpha");
+    val += "beta";
+    assert(val == "alphabeta");
+    val += st;
+    assert(val == "alphabetaalphabeta");
+    val = 3;
+    assert("a" + val == "a3");
+    val = 3.0;
+    assert("a" + val == "a3.0");
     // The result of the comparison is undefined in C++11.
     // assert(val.begin() == val.end());
   }
