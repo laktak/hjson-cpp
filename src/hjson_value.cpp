@@ -842,6 +842,23 @@ Value& Value::operator++() {
 }
 
 
+Value& Value::operator--() {
+  switch (prv->type) {
+  case Value::Type::Double:
+    prv->d--;
+    break;
+  case Value::Type::Int64:
+    prv->i--;
+    break;
+  default:
+    throw type_mismatch("The values must be of type Double or Int64 for this operation.");
+    break;
+  }
+
+  return *this;
+}
+
+
 Value Value::operator++(int) {
   Value ret;
 
@@ -853,6 +870,27 @@ Value Value::operator++(int) {
   case Value::Type::Int64:
     ret = prv->i;
     prv->i++;
+    break;
+  default:
+    throw type_mismatch("The values must be of type Double or Int64 for this operation.");
+    break;
+  }
+
+  return ret;
+}
+
+
+Value Value::operator--(int) {
+  Value ret;
+
+  switch (prv->type) {
+  case Value::Type::Double:
+    ret = prv->d;
+    prv->d--;
+    break;
+  case Value::Type::Int64:
+    ret = prv->i;
+    prv->i--;
     break;
   default:
     throw type_mismatch("The values must be of type Double or Int64 for this operation.");

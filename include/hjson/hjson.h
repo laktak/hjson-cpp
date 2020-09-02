@@ -41,6 +41,7 @@ HJSON_OPERATORS_DECLARATION_B(_T) \
 HJSON_OP_DECL_VAL(_T, %) \
 HJSON_OP_DECL_ASS(_T, %=)
 
+
 namespace Hjson {
 
 
@@ -161,7 +162,9 @@ public:
   Value operator+() const;
   Value operator-() const;
   Value& operator++();
+  Value& operator--();
   Value operator++(int);
+  Value operator--(int);
 
   explicit operator bool() const;
   operator float() const;

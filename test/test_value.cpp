@@ -346,6 +346,10 @@ void test_value() {
     assert(val1 == 6);
     val1 -= 1.0;
     assert(val1 == 5);
+    assert(--val1 == 4);
+    assert(val1 == 4);
+    assert(val1-- == 4);
+    assert(val1 == 3);
   }
 
   {
