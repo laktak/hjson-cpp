@@ -32,6 +32,8 @@ public:
 
 class Value::ValueImpl {
 public:
+  class ValueImplCom;
+
   Type type;
   union {
     bool b;
@@ -48,7 +50,13 @@ public:
   explicit ValueImpl(std::int64_t);
   ValueImpl(const std::string&);
   ValueImpl(Type);
-  ~ValueImpl();
+  virtual ~ValueImpl();
+};
+
+
+class Value::ValueImpl::ValueImplCom : public Value::ValueImpl {
+public:
+  std::string m_commentBefore, m_commentInside, m_commentAfter;
 };
 
 
