@@ -102,7 +102,11 @@ class Value {
 
 private:
   class ValueImpl;
+  class Comments;
+
   std::shared_ptr<ValueImpl> prv;
+  std::shared_ptr<Comments> cm;
+
   Value(std::shared_ptr<ValueImpl>);
 
 public:
@@ -136,6 +140,8 @@ public:
   Value(const std::string&);
   Value(Type);
   virtual ~Value();
+
+  Value& operator =(const Value&);
 
   const Value operator[](const std::string&) const;
   MapProxy operator[](const std::string&);
@@ -234,6 +240,19 @@ public:
   double to_double() const;
   std::int64_t to_int64() const;
   std::string to_string() const;
+
+  void set_comment_before(const std::string&);
+  std::string get_comment_before() const;
+  void set_comment_key(const std::string&);
+  std::string get_comment_key() const;
+  void set_comment_inside(const std::string&);
+  std::string get_comment_inside() const;
+  void set_comment_after(const std::string&);
+  std::string get_comment_after() const;
+
+  // Copies all comments from the other Hjson::Value.
+  void set_comments(const Value&);
+  void clear_comments();
 };
 
 
@@ -246,13 +265,13 @@ private:
   // True if an explicit assignment has been made to this MapProxy.
   bool wasAssigned;
 
-  MapProxy(std::shared_ptr<ValueImpl> parent, std::shared_ptr<ValueImpl> child,
+  MapProxy(std::shared_ptr<ValueImpl> parent, Value child,
     const std::string& key);
 
 public:
   ~MapProxy();
-  MapProxy &operator =(const MapProxy&);
-  MapProxy &operator =(const Value&);
+  MapProxy& operator =(const MapProxy&);
+  MapProxy& operator =(const Value&);
 };
 
 

@@ -908,4 +908,72 @@ arr: [
     assert(root2.deep_equal(root1));
     std::remove(szTmp);
   }
+
+  {
+    Hjson::Value val1(1), val2(2);
+
+    assert(val1.get_comment_after() == "");
+
+    val1.set_comment_after("after1");
+    val2.set_comment_after("after2");
+
+    val1 = val2;
+    assert(val1.get_comment_after() == "after1");
+    val1 = 3;
+    assert(val1.get_comment_after() == "after1");
+    assert(val2.get_comment_after() == "after2");
+
+    Hjson::Value val3;
+    val3["one"] = val1;
+    val3["one"].set_comment_after("afterOne");
+    val3["one"] = val2;
+    assert(val3["one"].get_comment_after() == "afterOne");
+    assert(val2.get_comment_after() == "after2");
+    val2 = val3["one"];
+    assert(val2.get_comment_after() == "after2");
+
+    auto fnValOne = [](const Hjson::Value& val) {
+      return val;
+    };
+
+    Hjson::Value val4 = fnValOne(val1);
+    // val4 was created, should get the comments.
+    assert(val4.get_comment_after() == "after1");
+
+    val4 = fnValOne(val2);
+    // val4 already existed, should not get new comments.
+    assert(val4.get_comment_after() == "after1");
+
+    auto fnValTwo = [](Hjson::Value val) {
+      return val;
+    };
+
+    Hjson::Value val5 = fnValTwo(val1);
+    // val5 was created, should get the comments.
+    assert(val5.get_comment_after() == "after1");
+
+    val5 = fnValTwo(val2);
+    // val5 already existed, should not get new comments.
+    assert(val5.get_comment_after() == "after1");
+
+    Hjson::Value val6 = val1;
+    // val6 was created, should get the comments.
+    assert(val6.get_comment_after() == "after1");
+
+    val6 = val2;
+    // val6 already existed, should not get new comments.
+    assert(val6.get_comment_after() == "after1");
+
+    Hjson::Value val7;
+    val7.push_back(val1);
+    assert(val7[0].get_comment_after() == "after1");
+    val7[0] = val2;
+    assert(val7[0].get_comment_after() == "after1");
+
+    val1.clear_comments();
+    assert(val1.get_comment_after() == "");
+
+    val1.set_comments(val3["one"]);
+    assert(val1.get_comment_after() == "afterOne");
+  }
 }

@@ -32,8 +32,6 @@ public:
 
 class Value::ValueImpl {
 public:
-  class ValueImplCom;
-
   Type type;
   union {
     bool b;
@@ -50,13 +48,13 @@ public:
   explicit ValueImpl(std::int64_t);
   ValueImpl(const std::string&);
   ValueImpl(Type);
-  virtual ~ValueImpl();
+  ~ValueImpl();
 };
 
 
-class Value::ValueImpl::ValueImplCom : public Value::ValueImpl {
+class Value::Comments {
 public:
-  std::string m_commentBefore, m_commentInside, m_commentAfter;
+  std::string m_commentBefore, m_commentKey, m_commentInside, m_commentAfter;
 };
 
 
@@ -255,6 +253,15 @@ Value::~Value() {
 }
 
 
+Value& Value::operator=(const Value& other) {
+  this->prv = other.prv;
+
+  // Do not copy the comments, keep the existing ones.
+
+  return *this;
+}
+
+
 const Value Value::operator[](const std::string& name) const {
   if (prv->type == Type::Undefined) {
     return Value();
@@ -281,9 +288,9 @@ MapProxy Value::operator[](const std::string& name) {
 
   auto it = prv->m->m.find(name);
   if (it == prv->m->m.end()) {
-    return MapProxy(prv, std::make_shared<ValueImpl>(Type::Undefined), name);
+    return MapProxy(prv, Value(Type::Undefined), name);
   }
-  return MapProxy(prv, it->second.prv, name);
+  return MapProxy(prv, it->second, name);
 }
 
 
@@ -1557,20 +1564,101 @@ std::string Value::to_string() const {
 }
 
 
+void Value::set_comment_before(const std::string& str) {
+  if (!cm) {
+    cm = std::make_shared<Comments>();
+  }
+
+  cm->m_commentBefore = str;
+}
+
+
+std::string Value::get_comment_before() const {
+  if (cm) {
+    return cm->m_commentBefore;
+  }
+
+  return "";
+}
+
+
+void Value::set_comment_key(const std::string& str) {
+  if (!cm) {
+    cm = std::make_shared<Comments>();
+  }
+
+  cm->m_commentKey = str;
+}
+
+
+std::string Value::get_comment_key() const {
+  if (cm) {
+    return cm->m_commentKey;
+  }
+
+  return "";
+}
+
+
+void Value::set_comment_inside(const std::string& str) {
+  if (!cm) {
+    cm = std::make_shared<Comments>();
+  }
+
+  cm->m_commentInside = str;
+}
+
+
+std::string Value::get_comment_inside() const {
+  if (cm) {
+    return cm->m_commentInside;
+  }
+
+  return "";
+}
+
+
+void Value::set_comment_after(const std::string& str) {
+  if (!cm) {
+    cm = std::make_shared<Comments>();
+  }
+
+  cm->m_commentAfter = str;
+}
+
+
+std::string Value::get_comment_after() const {
+  if (cm) {
+    return cm->m_commentAfter;
+  }
+
+  return "";
+}
+
+
+void Value::set_comments(const Value& other) {
+  cm = other.cm;
+}
+
+
+void Value::clear_comments() {
+  cm.reset();
+}
+
+
 MapProxy::MapProxy(std::shared_ptr<ValueImpl> _parent,
-  std::shared_ptr<ValueImpl> _child, const std::string &_key)
-  : parentPrv(_parent),
+  Value _child, const std::string &_key)
+  : Value(_child),
+    parentPrv(_parent),
     key(_key),
     wasAssigned(false)
 {
-  prv = _child;
 }
 
 
 MapProxy::~MapProxy() {
   if (wasAssigned || !empty()) {
     auto m = &parentPrv->m->m;
-    Value val(prv);
     auto it = m->find(key);
 
     if (it == m->end()) {
@@ -1583,9 +1671,13 @@ MapProxy::~MapProxy() {
       // Without this requirement, checking for the existence of an element
       // would create an Undefined element for that key if it didn't already exist
       // (e.g. `if (val["key"] == 1) {` would create an element for "key").
-      m[0][key] = val;
+      m[0][key] = *this;
+      // In case set_comment_x was called on the MapProxy.
+      m[0][key].cm = this->cm;
     } else {
-      it->second = val;
+      it->second = *this;
+      // In case set_comment_x was called on the MapProxy.
+      it->second.cm = this->cm;
     }
   }
 }
