@@ -255,7 +255,7 @@ Value::Value(const Value& other)
   if (other.cm) {
     // Clone the comments instead of sharing the reference. This way a change
     // in the other Value does not affect the comments in this Value.
-    cm = std::make_shared<Comments>(*other.cm);
+    cm.reset(new Comments(*other.cm));
   }
 }
 
@@ -1577,7 +1577,7 @@ std::string Value::to_string() const {
 
 void Value::set_comment_before(const std::string& str) {
   if (!cm) {
-    cm = std::make_shared<Comments>();
+    cm.reset(new Comments());
   }
 
   cm->m_commentBefore = str;
@@ -1595,7 +1595,7 @@ std::string Value::get_comment_before() const {
 
 void Value::set_comment_key(const std::string& str) {
   if (!cm) {
-    cm = std::make_shared<Comments>();
+    cm.reset(new Comments());
   }
 
   cm->m_commentKey = str;
@@ -1613,7 +1613,7 @@ std::string Value::get_comment_key() const {
 
 void Value::set_comment_inside(const std::string& str) {
   if (!cm) {
-    cm = std::make_shared<Comments>();
+    cm.reset(new Comments());
   }
 
   cm->m_commentInside = str;
@@ -1631,7 +1631,7 @@ std::string Value::get_comment_inside() const {
 
 void Value::set_comment_after(const std::string& str) {
   if (!cm) {
-    cm = std::make_shared<Comments>();
+    cm.reset(new Comments());
   }
 
   cm->m_commentAfter = str;
@@ -1648,7 +1648,15 @@ std::string Value::get_comment_after() const {
 
 
 void Value::set_comments(const Value& other) {
-  cm = std::make_shared<Comments>(*other.cm);
+  if (other.cm) {
+    if (!cm) {
+      cm.reset(new Comments());
+    }
+
+    *cm = *other.cm;
+  } else {
+    clear_comments();
+  }
 }
 
 
@@ -1684,11 +1692,11 @@ MapProxy::~MapProxy() {
       // (e.g. `if (val["key"] == 1) {` would create an element for "key").
       m[0][key] = *this;
       // In case set_comment_x was called on the MapProxy.
-      m[0][key].cm = this->cm;
+      m[0][key].cm = std::move(this->cm);
     } else {
       it->second = *this;
       // In case set_comment_x was called on the MapProxy.
-      it->second.cm = this->cm;
+      it->second.cm = std::move(this->cm);
     }
   }
 }

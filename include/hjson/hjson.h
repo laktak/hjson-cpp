@@ -105,7 +105,7 @@ private:
   class Comments;
 
   std::shared_ptr<ValueImpl> prv;
-  std::shared_ptr<Comments> cm;
+  std::unique_ptr<Comments> cm;
 
   Value(std::shared_ptr<ValueImpl>);
 

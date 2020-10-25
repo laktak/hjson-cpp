@@ -988,5 +988,9 @@ arr: [
     val1.set_comments(val2);
     val2.set_comment_after("afterTwo");
     assert(val1.get_comment_after() == "after2");
+
+    Hjson::Value val8;
+    val1.set_comments(val8);
+    assert(val1.get_comment_after() == "");
   }
 }
