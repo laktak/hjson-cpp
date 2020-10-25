@@ -1648,7 +1648,7 @@ std::string Value::get_comment_after() const {
 
 
 void Value::set_comments(const Value& other) {
-  cm = other.cm;
+  cm = std::make_shared<Comments>(*other.cm);
 }
 
 

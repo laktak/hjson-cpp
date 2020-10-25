@@ -984,5 +984,9 @@ arr: [
 
     val3["one"].set_comment_after("after3");
     assert(val1.get_comment_after() == "afterOne");
+
+    val1.set_comments(val2);
+    val2.set_comment_after("afterTwo");
+    assert(val1.get_comment_after() == "after2");
   }
 }
