@@ -972,8 +972,17 @@ arr: [
 
     val1.clear_comments();
     assert(val1.get_comment_after() == "");
+    assert(val6.get_comment_after() == "after1");
+    assert(val7[0].get_comment_after() == "after1");
+
+    val5.set_comment_after("after5");
+    assert(val6.get_comment_after() == "after1");
+    assert(val7[0].get_comment_after() == "after1");
 
     val1.set_comments(val3["one"]);
+    assert(val1.get_comment_after() == "afterOne");
+
+    val3["one"].set_comment_after("after3");
     assert(val1.get_comment_after() == "afterOne");
   }
 }

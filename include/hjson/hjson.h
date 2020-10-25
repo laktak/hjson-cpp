@@ -139,6 +139,7 @@ public:
   Value(const char*);
   Value(const std::string&);
   Value(Type);
+  Value(const Value&);
   virtual ~Value();
 
   Value& operator =(const Value&);

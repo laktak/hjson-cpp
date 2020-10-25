@@ -249,6 +249,17 @@ Value::Value(Type _type)
 }
 
 
+Value::Value(const Value& other)
+  : prv(other.prv)
+{
+  if (other.cm) {
+    // Clone the comments instead of sharing the reference. This way a change
+    // in the other Value does not affect the comments in this Value.
+    cm = std::make_shared<Comments>(*other.cm);
+  }
+}
+
+
 Value::~Value() {
 }
 
