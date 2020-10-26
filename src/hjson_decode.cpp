@@ -414,28 +414,38 @@ static Value _readTfnns(Parser *p) {
 static Value _readArray(Parser *p) {
   Value array(Hjson::Value::Type::Vector);
 
+  // Skip '['.
   _next(p);
   _white(p);
 
+  auto cmBefore = p->get_comment();
+
   if (p->ch == ']') {
+    array.set_comment_inside(cmBefore);
     _next(p);
     return array; // empty array
   }
 
   while (p->ch > 0) {
     Value val = _readValue(p);
+    val.set_comment_before(cmBefore);
     array.push_back(val);
     _white(p);
+    auto cmAfter = p->get_comment();
     // in Hjson the comma is optional and trailing commas are allowed
     if (p->ch == ',') {
       _next(p);
       _white(p);
+      // It is unlikely that someone writes a comment after the value but
+      // before the comma, so we include any such comment in "comment_after".
+      cmAfter += p->get_comment();
     }
     if (p->ch == ']') {
+      array[array.size() - 1].set_comment_after(cmAfter);
       _next(p);
       return array;
     }
-    _white(p);
+    cmBefore = cmAfter;
   }
 
   throw syntax_error(_errAt(p, "End of input while parsing an array (did you forget a closing ']'?)"));
@@ -452,12 +462,15 @@ static Value _readObject(Parser *p, bool withoutBraces) {
   }
 
   _white(p);
+
+  auto cmBefore = p->get_comment();
+
   if (p->ch == '}' && !withoutBraces) {
-    object.set_comment_inside(p->get_comment());
+    object.set_comment_inside(cmBefore);
     _next(p);
     return object; // empty object
   }
-  auto cmBefore = p->get_comment();
+
   while (p->ch > 0) {
     auto key = _readKeyname(p);
     _white(p);
@@ -587,6 +600,8 @@ static Value _rootValue(Parser *p) {
 
   if (res.defined()) {
     res.set_comment_before(cmBefore);
+    // The comment has been read in the function _hasTrailing().
+    res.set_comment_after(p->get_comment());
     return res;
   }
 
