@@ -9,24 +9,47 @@
 namespace Hjson {
 
 
+class CommentInfo {
+public:
+  bool hasComment;
+  int cmStart, cmEnd;
+};
+
+
 class Parser {
 public:
   const unsigned char *data;
   size_t dataSize;
   int at;
-  int cmStart;
-  bool hasComment;
   unsigned char ch;
   DecoderOptions opt;
-
-  std::string get_comment() const {
-    return hasComment ? std::string(data + cmStart, data + at) : "";
-  }
 };
 
 
 bool tryParseNumber(Value *pNumber, const char *text, size_t textSize, bool stopAtNext);
 static Value _readValue(Parser *p);
+
+
+static inline void _setComment(Value& val, void (Value::*fp)(const std::string&),
+  Parser *p, const CommentInfo& ci)
+{
+  if (ci.hasComment) {
+    (val.*fp)(std::string(p->data + ci.cmStart, p->data + ci.cmEnd));
+  }
+}
+
+
+static inline void _setComment(Value& val, void (Value::*fp)(const std::string&),
+  Parser *p, const CommentInfo& ciA, const CommentInfo& ciB)
+{
+  if (ciA.hasComment && ciB.hasComment) {
+    (val.*fp)(std::string(p->data + ciA.cmStart, p->data + ciA.cmEnd) +
+      std::string(p->data + ciB.cmStart, p->data + ciB.cmEnd));
+  } else {
+    _setComment(val, fp, p, ciA);
+    _setComment(val, fp, p, ciB);
+  }
+}
 
 
 // trim from start (in place)
@@ -54,8 +77,7 @@ static inline std::string _trim(std::string s) {
 
 
 static void _resetAt(Parser *p) {
-  p->at = p->cmStart = 0;
-  p->hasComment = false;
+  p->at = 0;
   p->ch = ' ';
 }
 
@@ -318,9 +340,12 @@ static std::string _readKeyname(Parser *p) {
 }
 
 
-static void _white(Parser *p) {
-  p->hasComment = false;
-  p->cmStart = p->at;
+static CommentInfo _white(Parser *p) {
+  CommentInfo ci = {
+    false,
+    p->at,
+    0
+  };
 
   while (p->ch > 0) {
     // Skip whitespace.
@@ -330,14 +355,14 @@ static void _white(Parser *p) {
     // Hjson allows comments
     if (p->ch == '#' || (p->ch == '/' && _peek(p, 0) == '/')) {
       if (p->opt.comments) {
-        p->hasComment = true;
+        ci.hasComment = true;
       }
       while (p->ch > 0 && p->ch != '\n') {
         _next(p);
       }
     } else if (p->ch == '/' && _peek(p, 0) == '*') {
       if (p->opt.comments) {
-        p->hasComment = true;
+        ci.hasComment = true;
       }
       _next(p);
       _next(p);
@@ -352,6 +377,10 @@ static void _white(Parser *p) {
       break;
     }
   }
+
+  ci.cmEnd = p->at;
+
+  return ci;
 }
 
 
@@ -416,36 +445,35 @@ static Value _readArray(Parser *p) {
 
   // Skip '['.
   _next(p);
-  _white(p);
-
-  auto cmBefore = p->get_comment();
+  auto ciBefore = _white(p);
 
   if (p->ch == ']') {
-    array.set_comment_inside(cmBefore);
+    _setComment(array, &Value::set_comment_inside, p, ciBefore);
     _next(p);
     return array; // empty array
   }
 
+  CommentInfo ciExtra = {};
+
   while (p->ch > 0) {
-    Value val = _readValue(p);
-    val.set_comment_before(cmBefore);
-    array.push_back(val);
-    _white(p);
-    auto cmAfter = p->get_comment();
+    array.push_back(_readValue(p));
+    _setComment(array[array.size() - 1], &Value::set_comment_before, p, ciBefore, ciExtra);
+    auto ciAfter = _white(p);
     // in Hjson the comma is optional and trailing commas are allowed
     if (p->ch == ',') {
       _next(p);
-      _white(p);
       // It is unlikely that someone writes a comment after the value but
       // before the comma, so we include any such comment in "comment_after".
-      cmAfter += p->get_comment();
+      ciExtra = _white(p);
+    } else {
+      ciExtra = {};
     }
     if (p->ch == ']') {
-      array[array.size() - 1].set_comment_after(cmAfter);
+      _setComment(array[array.size() - 1], &Value::set_comment_after, p, ciAfter, ciExtra);
       _next(p);
       return array;
     }
-    cmBefore = cmAfter;
+    ciBefore = ciAfter;
   }
 
   throw syntax_error(_errAt(p, "End of input while parsing an array (did you forget a closing ']'?)"));
@@ -461,20 +489,19 @@ static Value _readObject(Parser *p, bool withoutBraces) {
     _next(p);
   }
 
-  _white(p);
-
-  auto cmBefore = p->get_comment();
+  auto ciBefore = _white(p);
 
   if (p->ch == '}' && !withoutBraces) {
-    object.set_comment_inside(cmBefore);
+    _setComment(object, &Value::set_comment_inside, p, ciBefore);
     _next(p);
     return object; // empty object
   }
 
+  CommentInfo ciExtra = {};
+
   while (p->ch > 0) {
     auto key = _readKeyname(p);
-    _white(p);
-    auto cmKey = p->get_comment();
+    auto ciKey = _white(p);
     if (p->ch != ':') {
       throw syntax_error(_errAt(p, std::string(
         "Expected ':' instead of '") + (char)(p->ch) + "'"));
@@ -482,32 +509,35 @@ static Value _readObject(Parser *p, bool withoutBraces) {
     _next(p);
     // duplicate keys overwrite the previous value
     object[key] = _readValue(p);
-    cmKey += object[key].get_comment_before();
-    object[key].set_comment_key(cmKey);
-    object[key].set_comment_before(cmBefore);
-    _white(p);
-    auto cmAfter = p->get_comment();
+    _setComment(object[key], &Value::set_comment_key, p, ciKey);
+    if (!object[key].get_comment_before().empty()) {
+      object[key].set_comment_key(object[key].get_comment_key() +
+        object[key].get_comment_before());
+    }
+    _setComment(object[key], &Value::set_comment_before, p, ciBefore, ciExtra);
+    auto ciAfter = _white(p);
     // in Hjson the comma is optional and trailing commas are allowed
     if (p->ch == ',') {
       _next(p);
-      _white(p);
       // It is unlikely that someone writes a comment after the value but
       // before the comma, so we include any such comment in "comment_after".
-      cmAfter += p->get_comment();
+      ciExtra = _white(p);
+    } else {
+      ciExtra = {};
     }
     if (p->ch == '}' && !withoutBraces) {
-      object[key].set_comment_after(cmAfter);
+      _setComment(object[key], &Value::set_comment_after, p, ciAfter, ciExtra);
       _next(p);
       return object;
     }
-    cmBefore = cmAfter;
+    ciBefore = ciAfter;
   }
 
   if (withoutBraces) {
     if (object.empty()) {
-      object.set_comment_inside(cmBefore);
+      _setComment(object, &Value::set_comment_inside, p, ciBefore);
     } else {
-      object[object.size() - 1].set_comment_after(cmBefore);
+      _setComment(object[object.size() - 1], &Value::set_comment_after, p, ciBefore, ciExtra);
     }
 
     return object;
@@ -520,8 +550,7 @@ static Value _readObject(Parser *p, bool withoutBraces) {
 static Value _readValue(Parser *p) {
   Hjson::Value ret;
 
-  _white(p);
-  auto cmBefore = p->get_comment();
+  auto ciBefore = _white(p);
 
   switch (p->ch) {
   case '{':
@@ -539,70 +568,68 @@ static Value _readValue(Parser *p) {
     break;
   }
 
-  ret.set_comment_before(cmBefore);
+  _setComment(ret, &Value::set_comment_before, p, ciBefore);
 
   return ret;
 }
 
 
-static Value _hasTrailing(Parser *p) {
-  _white(p);
+static Value _hasTrailing(Parser *p, CommentInfo *ci) {
+  *ci = _white(p);
   return p->ch > 0;
 }
 
 
 // Braces for the root object are optional
 static Value _rootValue(Parser *p) {
-  Value res;
+  Value ret;
   std::string errMsg;
+  CommentInfo ciAfter;
 
-  _white(p);
-
-  std::string cmBefore = p->get_comment();
+  auto ciBefore = _white(p);
 
   switch (p->ch) {
   case '{':
-    res = _readObject(p, false);
-    if (_hasTrailing(p)) {
+    ret = _readObject(p, false);
+    if (_hasTrailing(p, &ciAfter)) {
       throw syntax_error(_errAt(p, "Syntax error, found trailing characters"));
     }
     break;
   case '[':
-    res = _readArray(p);
-    if (_hasTrailing(p)) {
+    ret = _readArray(p);
+    if (_hasTrailing(p, &ciAfter)) {
       throw syntax_error(_errAt(p, "Syntax error, found trailing characters"));
     }
     break;
   }
 
-  if (!res.defined()) {
+  if (!ret.defined()) {
     // assume we have a root object without braces
     try {
-      res = _readObject(p, true);
-      if (_hasTrailing(p)) {
+      ret = _readObject(p, true);
+      if (_hasTrailing(p, &ciAfter)) {
         // Syntax error, or maybe a single JSON value.
-        res = Value();
+        ret = Value();
       }
     } catch(syntax_error e) {
       errMsg = std::string(e.what());
     }
   }
 
-  if (!res.defined()) {
+  if (!ret.defined()) {
     // test if we are dealing with a single JSON value instead (true/false/null/num/"")
     _resetAt(p);
-    res = _readValue(p);
-    if (_hasTrailing(p)) {
+    ret = _readValue(p);
+    if (_hasTrailing(p, &ciAfter)) {
       // Syntax error.
-      res = Value();
+      ret = Value();
     }
   }
 
-  if (res.defined()) {
-    res.set_comment_before(cmBefore);
-    // The comment has been read in the function _hasTrailing().
-    res.set_comment_after(p->get_comment());
-    return res;
+  if (ret.defined()) {
+    _setComment(ret, &Value::set_comment_before, p, ciBefore);
+    _setComment(ret, &Value::set_comment_after, p, ciAfter);
+    return ret;
   }
 
   if (!errMsg.empty()) {
@@ -622,8 +649,6 @@ Value Unmarshal(const char *data, size_t dataSize, DecoderOptions options) {
     (const unsigned char*) data,
     dataSize,
     0,
-    0,
-    false,
     ' ',
     options
   };
