@@ -13,7 +13,10 @@ struct Parser {
   const unsigned char *data;
   size_t dataSize;
   int at;
+  int cmStart;
+  bool hasComment;
   unsigned char ch;
+  DecoderOptions opt;
 };
 
 
@@ -46,7 +49,8 @@ static inline std::string _trim(std::string s) {
 
 
 static void _resetAt(Parser *p) {
-  p->at = 0;
+  p->at = p->cmStart = 0;
+  p->hasComment = false;
   p->ch = ' ';
 }
 
@@ -310,6 +314,9 @@ static std::string _readKeyname(Parser *p) {
 
 
 static void _white(Parser *p) {
+  p->hasComment = false;
+  p->cmStart = p->at;
+
   while (p->ch > 0) {
     // Skip whitespace.
     while (p->ch > 0 && p->ch <= ' ') {
@@ -317,10 +324,16 @@ static void _white(Parser *p) {
     }
     // Hjson allows comments
     if (p->ch == '#' || (p->ch == '/' && _peek(p, 0) == '/')) {
+      if (p->opt.comments) {
+        p->hasComment = true;
+      }
       while (p->ch > 0 && p->ch != '\n') {
         _next(p);
       }
     } else if (p->ch == '/' && _peek(p, 0) == '*') {
+      if (p->opt.comments) {
+        p->hasComment = true;
+      }
       _next(p);
       _next(p);
       while (p->ch > 0 && !(p->ch == '*' && _peek(p, 0) == '/')) {
@@ -498,6 +511,7 @@ static Value _rootValue(Parser *p) {
   std::string errMsg;
 
   _white(p);
+  std::string cmBefore = std::string(p->data + p->cmStart, p->data + p->at);
 
   switch (p->ch) {
   case '{':
@@ -505,29 +519,40 @@ static Value _rootValue(Parser *p) {
     if (_hasTrailing(p)) {
       throw syntax_error(_errAt(p, "Syntax error, found trailing characters"));
     }
-    return res;
+    break;
   case '[':
     res = _readArray(p);
     if (_hasTrailing(p)) {
       throw syntax_error(_errAt(p, "Syntax error, found trailing characters"));
     }
-    return res;
+    break;
   }
 
-  // assume we have a root object without braces
-  try {
-    res = _readObject(p, true);
-    if (!_hasTrailing(p)) {
-      return res;
+  if (!res.defined()) {
+    // assume we have a root object without braces
+    try {
+      res = _readObject(p, true);
+      if (_hasTrailing(p)) {
+        // Syntax error, or maybe a single JSON value.
+        res = Value();
+      }
+    } catch(syntax_error e) {
+      errMsg = std::string(e.what());
     }
-  } catch(syntax_error e) {
-    errMsg = std::string(e.what());
   }
 
-  // test if we are dealing with a single JSON value instead (true/false/null/num/"")
-  _resetAt(p);
-  res = _readValue(p);
-  if (!_hasTrailing(p)) {
+  if (!res.defined()) {
+    // test if we are dealing with a single JSON value instead (true/false/null/num/"")
+    _resetAt(p);
+    res = _readValue(p);
+    if (_hasTrailing(p)) {
+      // Syntax error.
+      res = Value();
+    }
+  }
+
+  if (res.defined()) {
+    res.set_comment_before(cmBefore);
     return res;
   }
 
@@ -548,7 +573,10 @@ Value Unmarshal(const char *data, size_t dataSize, DecoderOptions options) {
     (const unsigned char*) data,
     dataSize,
     0,
-    ' '
+    0,
+    false,
+    ' ',
+    options
   };
 
   _resetAt(&parser);
@@ -561,12 +589,12 @@ Value Unmarshal(const char *data, DecoderOptions options) {
     return Value();
   }
 
-  return Unmarshal(data, std::strlen(data));
+  return Unmarshal(data, std::strlen(data), options);
 }
 
 
 Value Unmarshal(const std::string &data, DecoderOptions options) {
-  return Unmarshal(data.c_str(), data.size());
+  return Unmarshal(data.c_str(), data.size(), options);
 }
 
 
@@ -581,7 +609,7 @@ Value UnmarshalFromFile(const std::string &path, DecoderOptions options) {
   infile.read(&inStr[0], inStr.size());
   infile.close();
 
-  return Unmarshal(inStr);
+  return Unmarshal(inStr, options);
 }
 
 

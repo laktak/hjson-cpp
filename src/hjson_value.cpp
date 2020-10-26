@@ -1577,6 +1577,9 @@ std::string Value::to_string() const {
 
 void Value::set_comment_before(const std::string& str) {
   if (!cm) {
+    if (str.empty()) {
+      return;
+    }
     cm.reset(new Comments());
   }
 
@@ -1595,6 +1598,9 @@ std::string Value::get_comment_before() const {
 
 void Value::set_comment_key(const std::string& str) {
   if (!cm) {
+    if (str.empty()) {
+      return;
+    }
     cm.reset(new Comments());
   }
 
@@ -1613,6 +1619,9 @@ std::string Value::get_comment_key() const {
 
 void Value::set_comment_inside(const std::string& str) {
   if (!cm) {
+    if (str.empty()) {
+      return;
+    }
     cm.reset(new Comments());
   }
 
@@ -1631,6 +1640,9 @@ std::string Value::get_comment_inside() const {
 
 void Value::set_comment_after(const std::string& str) {
   if (!cm) {
+    if (str.empty()) {
+      return;
+    }
     cm.reset(new Comments());
   }
 
