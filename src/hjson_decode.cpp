@@ -543,7 +543,7 @@ static Value _rootValue(Parser *p) {
 //
 // Unmarshal uses the inverse of the encodings that Marshal uses.
 //
-Value Unmarshal(const char *data, size_t dataSize) {
+Value Unmarshal(const char *data, size_t dataSize, DecoderOptions options) {
   Parser parser = {
     (const unsigned char*) data,
     dataSize,
@@ -556,7 +556,7 @@ Value Unmarshal(const char *data, size_t dataSize) {
 }
 
 
-Value Unmarshal(const char *data) {
+Value Unmarshal(const char *data, DecoderOptions options) {
   if (!data) {
     return Value();
   }
@@ -565,12 +565,12 @@ Value Unmarshal(const char *data) {
 }
 
 
-Value Unmarshal(const std::string &data) {
+Value Unmarshal(const std::string &data, DecoderOptions options) {
   return Unmarshal(data.c_str(), data.size());
 }
 
 
-Value UnmarshalFromFile(const std::string &path) {
+Value UnmarshalFromFile(const std::string &path, DecoderOptions options) {
   std::ifstream infile(path, std::ifstream::ate | std::ifstream::binary);
   if (!infile.is_open()) {
     throw file_error("Could not open file '" + path + "' for reading");

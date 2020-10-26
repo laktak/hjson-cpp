@@ -65,32 +65,42 @@ class file_error : public std::runtime_error {
 };
 
 
+// DecoderOptions defines options for decoding from Hjson.
+struct DecoderOptions {
+  // Keep all comments from the Hjson input, store them in
+  // the Hjson::Value objects.
+  bool comments = true;
+};
+
+
 // EncoderOptions defines options for encoding to Hjson.
 struct EncoderOptions {
   // End of line, should be either \n or \r\n
-  std::string eol;
+  std::string eol = "\n";
   // Place braces on the same line
-  bool bracesSameLine;
+  bool bracesSameLine = true;
   // Always place string values in double quotation marks ("), and escape
   // any special chars inside the string value
-  bool quoteAlways;
+  bool quoteAlways = false;
   // Always place keys in quotes
-  bool quoteKeys;
+  bool quoteKeys = false;
   // Indent string
-  std::string indentBy;
+  std::string indentBy = "  ";
   // Allow the -0 value (unlike ES6)
-  bool allowMinusZero;
+  bool allowMinusZero = false;
   // Encode unknown values as 'null'
-  bool unknownAsNull;
+  bool unknownAsNull = false;
   // Output a comma separator between elements. If true, always place strings
   // in quotes (overriding the "quoteAlways" setting).
-  bool separator;
+  bool separator = false;
   // Only affects the order of elements in objects. If true, the key/value
   // pairs for all objects will be placed in the same order as they were added.
   // If false, the key/value pairs are placed in alphabetical key order.
-  bool preserveInsertionOrder;
+  bool preserveInsertionOrder = true;
   // If true, omits root braces.
-  bool omitRootBraces;
+  bool omitRootBraces = false;
+  // Write comments, if any are found in the Hjson::Value objects.
+  bool comments = true;
 };
 
 
@@ -276,6 +286,7 @@ public:
 };
 
 
+// Deprecated, defaults are now included in the declaration of EncoderOptions.
 EncoderOptions DefaultOptions();
 
 // Deprecated, use Marshal(const Value& v, EncoderOptions options) instead.
@@ -283,13 +294,14 @@ std::string MarshalWithOptions(const Value&, EncoderOptions);
 
 // Returns a properly indented text representation of the input value tree.
 // Extra options can be specified in the input parameter "options".
-std::string Marshal(const Value& v, EncoderOptions options = DefaultOptions());
+std::string Marshal(const Value& v, EncoderOptions options = EncoderOptions());
 
 // Writes (in binary mode, so using Unix EOL) a properly indented text
 // representation of the input value tree to the file specified by the input
 // parameter "path". Extra options can be specified in the input parameter
 // "options". Throws Hjson::file_error if the file cannot be opened for writing.
-void MarshalToFile(const Value& v, const std::string& path, EncoderOptions options = DefaultOptions());
+void MarshalToFile(const Value& v, const std::string& path,
+  EncoderOptions options = EncoderOptions());
 
 // Returns a properly indented JSON text representation of the input value
 // tree.
@@ -299,18 +311,21 @@ std::string MarshalJson(const Value&);
 std::ostream &operator <<(std::ostream& out, const Value& v);
 
 // Creates a Value tree from input text.
-Value Unmarshal(const char *data, size_t dataSize);
+Value Unmarshal(const char *data, size_t dataSize,
+  DecoderOptions options = DecoderOptions());
 
 // Creates a Value tree from input text.
 // The input parameter "data" must be null-terminated.
-Value Unmarshal(const char *data);
+Value Unmarshal(const char *data, DecoderOptions options = DecoderOptions());
 
 // Creates a Value tree from input text.
-Value Unmarshal(const std::string&);
+Value Unmarshal(const std::string& data,
+  DecoderOptions options = DecoderOptions());
 
 // Reads the entire file (in binary mode) and unmarshals it. Throws
 // Hjson::file_error if the file cannot be opened for reading.
-Value UnmarshalFromFile(const std::string& path);
+Value UnmarshalFromFile(const std::string& path,
+  DecoderOptions options = DecoderOptions());
 
 // Returns a Value tree that is a combination of the input parameters "base"
 // and "ext".

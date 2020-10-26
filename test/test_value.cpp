@@ -594,7 +594,7 @@ void test_value() {
     assert(val.size() == 2);
     std::string generatedHjson = Hjson::Marshal(val);
     assert(generatedHjson == "{\n}");
-    auto options = Hjson::DefaultOptions();
+    Hjson::EncoderOptions options;
     options.preserveInsertionOrder = false;
     generatedHjson = Hjson::Marshal(val, options);
     assert(generatedHjson == "{\n}");
@@ -781,9 +781,7 @@ void test_value() {
     assert(val1.key(0) == "y");
     assert(val1[2] == 99);
     val1.move(1, 0);
-    auto opt = Hjson::DefaultOptions();
-    opt.preserveInsertionOrder = true;
-    auto str = Hjson::MarshalWithOptions(val1, opt);
+    auto str = Hjson::Marshal(val1);
     assert(str == "{\n  xerxes: {\n    first: 3\n  }\n  y: 2\n  zeta: 99\n}");
     assert(val1[0]["first"] == 3);
     assert(val1.key(1) == "y");
@@ -859,10 +857,12 @@ void test_value() {
     assert(merged.key(1) == "rect");
     // The insertion order must have been kept in the clone.
     auto baseClone = base.clone();
-    auto options = Hjson::DefaultOptions();
+    auto baseCloneStr = Hjson::Marshal(baseClone);
+    assert(baseCloneStr == baseStr);
+    Hjson::EncoderOptions options = Hjson::DefaultOptions();
     options.bracesSameLine = true;
     options.preserveInsertionOrder = true;
-    auto baseCloneStr = Hjson::MarshalWithOptions(baseClone, options);
+    baseCloneStr = Hjson::MarshalWithOptions(baseClone, options);
     assert(baseCloneStr == baseStr);
   }
 
@@ -878,13 +878,13 @@ arr: [
   2
 ])";
 
-    auto options = Hjson::DefaultOptions();
+    Hjson::EncoderOptions options;
     options.bracesSameLine = true;
     options.preserveInsertionOrder = true;
     options.omitRootBraces = true;
 
     auto root = Hjson::Unmarshal(noRootBraces);
-    auto newStr = Hjson::MarshalWithOptions(root, options);
+    auto newStr = Hjson::Marshal(root, options);
     assert(newStr == noRootBraces);
   }
 
@@ -992,5 +992,9 @@ arr: [
     Hjson::Value val8;
     val1.set_comments(val8);
     assert(val1.get_comment_after() == "");
+
+    Hjson::Value val9;
+    val8.set_comments(val9);
+    assert(val8.get_comment_after() == "");
   }
 }
