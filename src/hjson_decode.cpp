@@ -9,7 +9,8 @@
 namespace Hjson {
 
 
-struct Parser {
+class Parser {
+public:
   const unsigned char *data;
   size_t dataSize;
   int at;
@@ -17,6 +18,10 @@ struct Parser {
   bool hasComment;
   unsigned char ch;
   DecoderOptions opt;
+
+  std::string get_comment() const {
+    return hasComment ? std::string(data + cmStart, data + at) : "";
+  }
 };
 
 
@@ -448,12 +453,15 @@ static Value _readObject(Parser *p, bool withoutBraces) {
 
   _white(p);
   if (p->ch == '}' && !withoutBraces) {
+    object.set_comment_inside(p->get_comment());
     _next(p);
     return object; // empty object
   }
+  auto cmBefore = p->get_comment();
   while (p->ch > 0) {
     auto key = _readKeyname(p);
     _white(p);
+    auto cmKey = p->get_comment();
     if (p->ch != ':') {
       throw syntax_error(_errAt(p, std::string(
         "Expected ':' instead of '") + (char)(p->ch) + "'"));
@@ -461,20 +469,34 @@ static Value _readObject(Parser *p, bool withoutBraces) {
     _next(p);
     // duplicate keys overwrite the previous value
     object[key] = _readValue(p);
+    cmKey += object[key].get_comment_before();
+    object[key].set_comment_key(cmKey);
+    object[key].set_comment_before(cmBefore);
     _white(p);
+    auto cmAfter = p->get_comment();
     // in Hjson the comma is optional and trailing commas are allowed
     if (p->ch == ',') {
       _next(p);
       _white(p);
+      // It is unlikely that someone writes a comment after the value but
+      // before the comma, so we include any such comment in "comment_after".
+      cmAfter += p->get_comment();
     }
     if (p->ch == '}' && !withoutBraces) {
+      object[key].set_comment_after(cmAfter);
       _next(p);
       return object;
     }
-    _white(p);
+    cmBefore = cmAfter;
   }
 
   if (withoutBraces) {
+    if (object.empty()) {
+      object.set_comment_inside(cmBefore);
+    } else {
+      object[object.size() - 1].set_comment_after(cmBefore);
+    }
+
     return object;
   }
   throw syntax_error(_errAt(p, "End of input while parsing an object (did you forget a closing '}'?)"));
@@ -483,19 +505,30 @@ static Value _readObject(Parser *p, bool withoutBraces) {
 
 // Parse a Hjson value. It could be an object, an array, a string, a number or a word.
 static Value _readValue(Parser *p) {
+  Hjson::Value ret;
+
   _white(p);
+  auto cmBefore = p->get_comment();
 
   switch (p->ch) {
   case '{':
-    return _readObject(p, false);
+    ret = _readObject(p, false);
+    break;
   case '[':
-    return _readArray(p);
+    ret = _readArray(p);
+    break;
   case '"':
   case '\'':
-    return _readString(p, true);
+    ret = _readString(p, true);
+    break;
   default:
-    return _readTfnns(p);
+    ret = _readTfnns(p);
+    break;
   }
+
+  ret.set_comment_before(cmBefore);
+
+  return ret;
 }
 
 
@@ -511,7 +544,8 @@ static Value _rootValue(Parser *p) {
   std::string errMsg;
 
   _white(p);
-  std::string cmBefore = std::string(p->data + p->cmStart, p->data + p->at);
+
+  std::string cmBefore = p->get_comment();
 
   switch (p->ch) {
   case '{':
