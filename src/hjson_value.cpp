@@ -1680,6 +1680,16 @@ void Value::clear_comments() {
 }
 
 
+Value& Value::assign_with_comments(const Value& other) {
+  // If this object is of type Undefined set_comments() will be called in the
+  // assignment operator, no need to call it here.
+  if (defined()) {
+    set_comments(other);
+  }
+  return operator=(other);
+}
+
+
 MapProxy::MapProxy(std::shared_ptr<ValueImpl> _parent,
   Value _child, const std::string &_key)
   : Value(_child),
@@ -1717,17 +1727,37 @@ MapProxy::~MapProxy() {
 }
 
 
-MapProxy &MapProxy::operator =(const MapProxy &other) {
+MapProxy& MapProxy::operator =(const MapProxy &other) {
   Value::operator=(other);
   wasAssigned = true;
   return *this;
 }
 
 
-MapProxy &MapProxy::operator =(const Value& other) {
+MapProxy& MapProxy::operator =(const Value& other) {
   Value::operator=(other);
   wasAssigned = true;
   return *this;
+}
+
+
+MapProxy& MapProxy::assign_with_comments(const MapProxy& other) {
+  // If this object is of type Undefined set_comments() will be called in the
+  // assignment operator, no need to call it here.
+  if (defined()) {
+    set_comments(other);
+  }
+  return operator=(other);
+}
+
+
+MapProxy& MapProxy::assign_with_comments(const Value& other) {
+  // If this object is of type Undefined set_comments() will be called in the
+  // assignment operator, no need to call it here.
+  if (defined()) {
+    set_comments(other);
+  }
+  return operator=(other);
 }
 
 

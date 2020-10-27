@@ -529,11 +529,11 @@ static Value _readObject(Parser *p, bool withoutBraces) {
     }
     if (p->ch == '}' && !withoutBraces) {
       _setComment(elem, &Value::set_comment_after, p, ciAfter, ciExtra);
-      object[key] = elem;
+      object[key].assign_with_comments(elem);
       _next(p);
       return object;
     }
-    object[key] = elem;
+    object[key].assign_with_comments(elem);
     ciBefore = ciAfter;
   }
 
@@ -543,9 +543,7 @@ static Value _readObject(Parser *p, bool withoutBraces) {
     } else {
       auto elem = object[object.size() - 1];
       _setComment(elem, &Value::set_comment_after, p, ciBefore, ciExtra);
-      // So that comments are kept.
-      object[object.size() - 1] = Value(Value::Type::Undefined);
-      object[object.size() - 1] = elem;
+      object[object.size() - 1].assign_with_comments(elem);
     }
 
     return object;

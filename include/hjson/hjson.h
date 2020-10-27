@@ -264,6 +264,8 @@ public:
   // Copies all comments from the other Hjson::Value.
   void set_comments(const Value&);
   void clear_comments();
+  // A combination of the assignment operator (=) and set_comments().
+  Value& assign_with_comments(const Value&);
 };
 
 
@@ -283,6 +285,8 @@ public:
   ~MapProxy();
   MapProxy& operator =(const MapProxy&);
   MapProxy& operator =(const Value&);
+  MapProxy& assign_with_comments(const MapProxy&);
+  MapProxy& assign_with_comments(const Value&);
 };
 
 
