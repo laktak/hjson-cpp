@@ -265,9 +265,12 @@ Value::~Value() {
 
 
 Value& Value::operator=(const Value& other) {
-  this->prv = other.prv;
+  // So that comments are kept when assigning a Value to a new key in a map.
+  if (!this->defined()) {
+    this->set_comments(other);
+  }
 
-  // Do not copy the comments, keep the existing ones.
+  this->prv = other.prv;
 
   return *this;
 }
@@ -1715,14 +1718,14 @@ MapProxy::~MapProxy() {
 
 
 MapProxy &MapProxy::operator =(const MapProxy &other) {
-  prv = other.prv;
+  Value::operator=(other);
   wasAssigned = true;
   return *this;
 }
 
 
 MapProxy &MapProxy::operator =(const Value& other) {
-  prv = other.prv;
+  Value::operator=(other);
   wasAssigned = true;
   return *this;
 }

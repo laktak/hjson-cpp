@@ -267,7 +267,7 @@ static void _quoteName(Encoder *e, std::string name) {
 
 // Produce a string from value.
 static void _str(Encoder *e, Value value, bool noIndent, std::string separator,
-  bool isRootObject)
+  bool isRootObject, bool isObjElement)
 {
   switch (value.type()) {
   case Value::Type::Double:
@@ -311,7 +311,7 @@ static void _str(Encoder *e, Value value, bool noIndent, std::string separator,
           }
 
           _writeIndent(e, e->indent);
-          _str(e, value[i], true, "", false);
+          _str(e, value[i], true, "", false, false);
         }
       }
 
@@ -387,7 +387,7 @@ static void _objElem(Encoder *e, std::string key, Value value, bool *pIsFirst,
 
   _quoteName(e, key);
   e->oss << ":";
-  _str(e, value, false, " ", false);
+  _str(e, value, false, " ", false, true);
 }
 
 
@@ -446,7 +446,7 @@ std::string Marshal(const Value& v, EncoderOptions options) {
   e.needsEscapeName.assign(R"([,\{\[\}\]\s:#"']|//|/\*)");
   e.lineBreak.assign(R"(\r|\n|\r\n)");
 
-  _str(&e, v, true, "", true);
+  _str(&e, v, true, "", true, false);
 
   return e.oss.str();
 }
@@ -466,17 +466,18 @@ void MarshalToFile(const Value& v, const std::string &path, EncoderOptions optio
 // default options + "bracesSameLine", "quoteAlways", "quoteKeys" and
 // "separator".
 //
-// See MarshalWithOptions.
+// See Marshal.
 //
 std::string MarshalJson(const Value& v) {
-  auto opt = DefaultOptions();
+  EncoderOptions opt;
 
   opt.bracesSameLine = true;
   opt.quoteAlways = true;
   opt.quoteKeys = true;
   opt.separator = true;
+  opt.comments = false;
 
-  return MarshalWithOptions(v, opt);
+  return Marshal(v, opt);
 }
 
 

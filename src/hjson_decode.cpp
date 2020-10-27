@@ -30,21 +30,21 @@ bool tryParseNumber(Value *pNumber, const char *text, size_t textSize, bool stop
 static Value _readValue(Parser *p);
 
 
-static inline void _setComment(Value val, void (Value::*fp)(const std::string&),
+static inline void _setComment(Value& val, void (Value::*fp)(const std::string&),
   Parser *p, const CommentInfo& ci)
 {
   if (ci.hasComment) {
-    (val.*fp)(std::string(p->data + ci.cmStart, p->data + ci.cmEnd));
+    (val.*fp)(std::string(p->data + ci.cmStart, p->data + ci.cmEnd - 1));
   }
 }
 
 
-static inline void _setComment(Value val, void (Value::*fp)(const std::string&),
+static inline void _setComment(Value& val, void (Value::*fp)(const std::string&),
   Parser *p, const CommentInfo& ciA, const CommentInfo& ciB)
 {
   if (ciA.hasComment && ciB.hasComment) {
-    (val.*fp)(std::string(p->data + ciA.cmStart, p->data + ciA.cmEnd) +
-      std::string(p->data + ciB.cmStart, p->data + ciB.cmEnd));
+    (val.*fp)(std::string(p->data + ciA.cmStart, p->data + ciA.cmEnd - 1) +
+      std::string(p->data + ciB.cmStart, p->data + ciB.cmEnd - 1));
   } else {
     _setComment(val, fp, p, ciA);
     _setComment(val, fp, p, ciB);
@@ -456,8 +456,8 @@ static Value _readArray(Parser *p) {
   CommentInfo ciExtra = {};
 
   while (p->ch > 0) {
-    array.push_back(_readValue(p));
-    _setComment(array[array.size() - 1], &Value::set_comment_before, p, ciBefore, ciExtra);
+    auto elem = _readValue(p);
+    _setComment(elem, &Value::set_comment_before, p, ciBefore, ciExtra);
     auto ciAfter = _white(p);
     // in Hjson the comma is optional and trailing commas are allowed
     if (p->ch == ',') {
@@ -469,10 +469,12 @@ static Value _readArray(Parser *p) {
       ciExtra = {};
     }
     if (p->ch == ']') {
-      _setComment(array[array.size() - 1], &Value::set_comment_after, p, ciAfter, ciExtra);
+      _setComment(elem, &Value::set_comment_after, p, ciAfter, ciExtra);
+      array.push_back(elem);
       _next(p);
       return array;
     }
+    array.push_back(elem);
     ciBefore = ciAfter;
   }
 
@@ -508,13 +510,13 @@ static Value _readObject(Parser *p, bool withoutBraces) {
     }
     _next(p);
     // duplicate keys overwrite the previous value
-    object[key] = _readValue(p);
-    _setComment(object[key], &Value::set_comment_key, p, ciKey);
-    if (!object[key].get_comment_before().empty()) {
-      object[key].set_comment_key(object[key].get_comment_key() +
-        object[key].get_comment_before());
+    auto elem = _readValue(p);
+    _setComment(elem, &Value::set_comment_key, p, ciKey);
+    if (!elem.get_comment_before().empty()) {
+      elem.set_comment_key(elem.get_comment_key() +
+        elem.get_comment_before());
     }
-    _setComment(object[key], &Value::set_comment_before, p, ciBefore, ciExtra);
+    _setComment(elem, &Value::set_comment_before, p, ciBefore, ciExtra);
     auto ciAfter = _white(p);
     // in Hjson the comma is optional and trailing commas are allowed
     if (p->ch == ',') {
@@ -526,10 +528,12 @@ static Value _readObject(Parser *p, bool withoutBraces) {
       ciExtra = {};
     }
     if (p->ch == '}' && !withoutBraces) {
-      _setComment(object[key], &Value::set_comment_after, p, ciAfter, ciExtra);
+      _setComment(elem, &Value::set_comment_after, p, ciAfter, ciExtra);
+      object[key] = elem;
       _next(p);
       return object;
     }
+    object[key] = elem;
     ciBefore = ciAfter;
   }
 
@@ -537,7 +541,11 @@ static Value _readObject(Parser *p, bool withoutBraces) {
     if (object.empty()) {
       _setComment(object, &Value::set_comment_inside, p, ciBefore);
     } else {
-      _setComment(object[object.size() - 1], &Value::set_comment_after, p, ciBefore, ciExtra);
+      auto elem = object[object.size() - 1];
+      _setComment(elem, &Value::set_comment_after, p, ciBefore, ciExtra);
+      // So that comments are kept.
+      object[object.size() - 1] = Value(Value::Type::Undefined);
+      object[object.size() - 1] = elem;
     }
 
     return object;
