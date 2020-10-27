@@ -30,7 +30,7 @@ bool tryParseNumber(Value *pNumber, const char *text, size_t textSize, bool stop
 static Value _readValue(Parser *p);
 
 
-static inline void _setComment(Value& val, void (Value::*fp)(const std::string&),
+static inline void _setComment(Value val, void (Value::*fp)(const std::string&),
   Parser *p, const CommentInfo& ci)
 {
   if (ci.hasComment) {
@@ -39,7 +39,7 @@ static inline void _setComment(Value& val, void (Value::*fp)(const std::string&)
 }
 
 
-static inline void _setComment(Value& val, void (Value::*fp)(const std::string&),
+static inline void _setComment(Value val, void (Value::*fp)(const std::string&),
   Parser *p, const CommentInfo& ciA, const CommentInfo& ciB)
 {
   if (ciA.hasComment && ciB.hasComment) {
