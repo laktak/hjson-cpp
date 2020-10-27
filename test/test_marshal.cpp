@@ -31,6 +31,9 @@ static std::string _readFile(std::string pathBeginning, std::string extra,
   if (!infile.is_open()) {
     infile.open(pathBeginning + pathEnd, std::ifstream::ate);
   }
+  if (!infile.is_open()) {
+    return "";
+  }
 
   return _readStream(&infile);
 }
@@ -99,13 +102,25 @@ static void _examine(std::string filename) {
 
   Hjson::EncoderOptions opt;
   opt.bracesSameLine = false;
-  opt.comments = false;
 
-  auto rhjson = _readFile("assets/", extra, name + "_result.hjson");
+  auto rhjson = _readFile("assets/comments/", extra, name + "_result.hjson");
   auto actualHjson = Hjson::Marshal(root, opt);
 
 #if WRITE_FACIT
-  std::ofstream outputFile("assets/sorted/" + name + "_result.hjson", std::ofstream::binary);
+  std::ofstream outputFile = std::ofstream("assets/comments/" + name + "_result.hjson", std::ofstream::binary);
+  outputFile << actualHjson;
+  outputFile.close();
+#endif
+
+  _evaluate(rhjson, actualHjson);
+
+  opt.comments = false;
+
+  rhjson = _readFile("assets/", extra, name + "_result.hjson");
+  actualHjson = Hjson::Marshal(root, opt);
+
+#if WRITE_FACIT
+  outputFile = std::ofstream("assets/" + name + "_result.hjson", std::ofstream::binary);
   outputFile << actualHjson;
   outputFile.close();
 #endif
@@ -116,7 +131,7 @@ static void _examine(std::string filename) {
   auto actualJson = Hjson::MarshalJson(root);
 
 #if WRITE_FACIT
-  outputFile = std::ofstream("assets/sorted/" + name + "_result.json", std::ofstream::binary);
+  outputFile = std::ofstream("assets/" + name + "_result.json", std::ofstream::binary);
   outputFile << actualJson;
   outputFile.close();
 #endif
@@ -129,7 +144,7 @@ static void _examine(std::string filename) {
   actualHjson = Hjson::Marshal(root, opt);
 
 #if WRITE_FACIT
-  outputFile = std::ofstream("assets/" + name + "_result.hjson", std::ofstream::binary);
+  outputFile = std::ofstream("assets/sorted/" + name + "_result.hjson", std::ofstream::binary);
   outputFile << actualHjson;
   outputFile.close();
 #endif
@@ -140,12 +155,13 @@ static void _examine(std::string filename) {
   opt.quoteAlways = true;
   opt.quoteKeys = true;
   opt.separator = true;
+  opt.comments = false;
 
   rjson = _readFile("assets/sorted/", extra, name + "_result.json");
   actualJson = Hjson::Marshal(root, opt);
 
 #if WRITE_FACIT
-  outputFile = std::ofstream("assets/" + name + "_result.json", std::ofstream::binary);
+  outputFile = std::ofstream("assets/sorted/" + name + "_result.json", std::ofstream::binary);
   outputFile << actualJson;
   outputFile.close();
 #endif
