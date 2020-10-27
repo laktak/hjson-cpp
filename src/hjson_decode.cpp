@@ -34,7 +34,7 @@ static inline void _setComment(Value& val, void (Value::*fp)(const std::string&)
   Parser *p, const CommentInfo& ci)
 {
   if (ci.hasComment) {
-    (val.*fp)(std::string(p->data + ci.cmStart, p->data + ci.cmEnd - 1));
+    (val.*fp)(std::string(p->data + ci.cmStart, p->data + ci.cmEnd));
   }
 }
 
@@ -43,8 +43,8 @@ static inline void _setComment(Value& val, void (Value::*fp)(const std::string&)
   Parser *p, const CommentInfo& ciA, const CommentInfo& ciB)
 {
   if (ciA.hasComment && ciB.hasComment) {
-    (val.*fp)(std::string(p->data + ciA.cmStart, p->data + ciA.cmEnd - 1) +
-      std::string(p->data + ciB.cmStart, p->data + ciB.cmEnd - 1));
+    (val.*fp)(std::string(p->data + ciA.cmStart, p->data + ciA.cmEnd) +
+      std::string(p->data + ciB.cmStart, p->data + ciB.cmEnd));
   } else {
     _setComment(val, fp, p, ciA);
     _setComment(val, fp, p, ciB);
@@ -76,9 +76,33 @@ static inline std::string _trim(std::string s) {
 }
 
 
+static bool _next(Parser *p) {
+  // get the next character.
+  if (p->at < p->dataSize) {
+    p->ch = p->data[p->at++];
+    return true;
+  }
+
+  p->ch = 0;
+
+  return false;
+}
+
+
+static bool _prev(Parser *p) {
+  // get the previous character.
+  if (p->at > 1) {
+    p->ch = p->data[p->at-- - 2];
+    return true;
+  }
+
+  return false;
+}
+
+
 static void _resetAt(Parser *p) {
   p->at = 0;
-  p->ch = ' ';
+  _next(p);
 }
 
 
@@ -104,19 +128,6 @@ static std::string _errAt(Parser *p, std::string message) {
 
   return message + " at line " + std::to_string(line) + "," +
     std::to_string(col) + " >>> " + std::string((char*)p->data + p->at - col, samEnd);
-}
-
-
-static bool _next(Parser *p) {
-  // get the next character.
-  if (p->at < p->dataSize) {
-    p->ch = p->data[p->at++];
-    return true;
-  }
-
-  p->ch = 0;
-
-  return false;
 }
 
 
@@ -343,7 +354,7 @@ static std::string _readKeyname(Parser *p) {
 static CommentInfo _white(Parser *p) {
   CommentInfo ci = {
     false,
-    p->at,
+    p->at - 1,
     0
   };
 
@@ -378,7 +389,51 @@ static CommentInfo _white(Parser *p) {
     }
   }
 
-  ci.cmEnd = p->at;
+  ci.cmEnd = p->at - 1;
+
+  return ci;
+}
+
+
+static CommentInfo _getCommentAfter(Parser *p) {
+  CommentInfo ci = {
+    false,
+    p->at - 1,
+    0
+  };
+
+  while (p->ch > 0) {
+    // Skip whitespace, but only until EOL.
+    while (p->ch > 0 && p->ch <= ' ' && p->ch != '\n') {
+      _next(p);
+    }
+    // Hjson allows comments
+    if (p->ch == '#' || (p->ch == '/' && _peek(p, 0) == '/')) {
+      if (p->opt.comments) {
+        ci.hasComment = true;
+      }
+      while (p->ch > 0 && p->ch != '\n') {
+        _next(p);
+      }
+    } else if (p->ch == '/' && _peek(p, 0) == '*') {
+      if (p->opt.comments) {
+        ci.hasComment = true;
+      }
+      _next(p);
+      _next(p);
+      while (p->ch > 0 && !(p->ch == '*' && _peek(p, 0) == '/')) {
+        _next(p);
+      }
+      if (p->ch > 0) {
+        _next(p);
+        _next(p);
+      }
+    } else {
+      break;
+    }
+  }
+
+  ci.cmEnd = p->at - 1;
 
   return ci;
 }
@@ -571,10 +626,18 @@ static Value _readValue(Parser *p) {
     break;
   default:
     ret = _readTfnns(p);
+    // Make sure that any comment will include preceding whitespace.
+    if (p->ch == '#' || p->ch == '/') {
+      while (_prev(p) && std::isspace(p->ch)) {}
+      _next(p);
+    }
     break;
   }
 
+  auto ciAfter = _getCommentAfter(p);
+
   _setComment(ret, &Value::set_comment_before, p, ciBefore);
+  _setComment(ret, &Value::set_comment_after, p, ciAfter);
 
   return ret;
 }

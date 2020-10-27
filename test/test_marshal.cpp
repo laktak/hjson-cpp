@@ -97,8 +97,9 @@ static void _examine(std::string filename) {
   extra = "charconv/";
 #endif
 
-  auto opt = Hjson::DefaultOptions();
+  Hjson::EncoderOptions opt;
   opt.bracesSameLine = false;
+  opt.comments = false;
 
   auto rhjson = _readFile("assets/", extra, name + "_result.hjson");
   auto actualHjson = Hjson::Marshal(root, opt);

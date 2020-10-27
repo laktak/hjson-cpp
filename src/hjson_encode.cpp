@@ -212,14 +212,15 @@ static void _mlString(Encoder *e, std::string value, std::string separator) {
 // Check if we can insert this string without quotes
 // see hjson syntax (must not parse as true, false, null or number)
 static void _quote(Encoder *e, std::string value, std::string separator,
-  bool isRootObject)
+  bool isRootObject, bool hasCommentAfter)
 {
   if (value.size() == 0) {
     e->oss << separator << "\"\"";
   } else if (e->opt.quoteAlways ||
     std::regex_search(value, e->needsQuotes) ||
     startsWithNumber(value.c_str(), value.size()) ||
-    std::regex_search(value, e->startsWithKeyword))
+    std::regex_search(value, e->startsWithKeyword) ||
+    hasCommentAfter)
   {
 
     // If the string contains no control characters, no quote characters, and no
@@ -269,6 +270,10 @@ static void _quoteName(Encoder *e, std::string name) {
 static void _str(Encoder *e, Value value, bool noIndent, std::string separator,
   bool isRootObject, bool isObjElement)
 {
+  if (e->opt.comments) {
+    e->oss << (isObjElement ? value.get_comment_key() : value.get_comment_before());
+  }
+
   switch (value.type()) {
   case Value::Type::Double:
     e->oss << separator;
@@ -283,7 +288,7 @@ static void _str(Encoder *e, Value value, bool noIndent, std::string separator,
     break;
 
   case Value::Type::String:
-    _quote(e, value, separator, isRootObject);
+    _quote(e, value, separator, isRootObject, e->opt.comments && !value.get_comment_after().empty());
     break;
 
   case Value::Type::Vector:
@@ -367,27 +372,44 @@ static void _str(Encoder *e, Value value, bool noIndent, std::string separator,
   default:
     e->oss << separator << value.to_string();
   }
+
+  if (e->opt.comments) {
+    e->oss << value.get_comment_after();
+  }
 }
 
 
 static void _objElem(Encoder *e, std::string key, Value value, bool *pIsFirst,
   bool isRootObject)
 {
+  bool hasComment = (e->opt.comments && !value.get_comment_before().empty());
+
   if (*pIsFirst) {
     *pIsFirst = false;
-    if (!e->opt.omitRootBraces || !isRootObject) {
+    if ((!e->opt.omitRootBraces || !isRootObject) && !hasComment) {
       _writeIndent(e, e->indent);
     }
-  } else {
+  } else if (!hasComment) {
     if (e->opt.separator) {
       e->oss << ",";
     }
     _writeIndent(e, e->indent);
   }
 
+  if (hasComment) {
+    e->oss << value.get_comment_before();
+  }
+
   _quoteName(e, key);
   e->oss << ":";
-  _str(e, value, false, " ", false, true);
+  _str(
+    e,
+    value,
+    false,
+    (e->opt.comments && !value.get_comment_key().empty()) ? "" : " ",
+    false,
+    true
+  );
 }
 
 
