@@ -443,7 +443,10 @@ void test_value() {
     Hjson::Value val2 = val["first"];
     val["second"] = val["first"];
     val["fourth"] = 4.0;
-    double fourth = val["fourth"];
+    const Hjson::Value& valC = val;
+    double fourth = valC.operator[]("fourth");
+    assert(fourth == valC["fourth"]);
+    fourth = val["fourth"];
     assert(fourth == val["fourth"]);
     try {
       std::string fourthString = val["fourth"];
@@ -489,9 +492,17 @@ void test_value() {
   } catch (Hjson::type_mismatch e) {}
 
   {
+    const Hjson::Value val;
+    Hjson::Value undefined = val["down1"]["down2"]["down3"];
+    assert(undefined.type() == Hjson::Value::Type::Undefined);
+    assert(!val.defined());
+  }
+
+  {
     Hjson::Value val;
     Hjson::Value undefined = val["down1"]["down2"]["down3"];
     assert(undefined.type() == Hjson::Value::Type::Undefined);
+    //assert(!val.defined());
   }
 
   {
@@ -500,6 +511,20 @@ void test_value() {
     std::string tld = val["down1"]["down2"]["down3"];
     assert(tld == "three levels deep!");
     assert(val["down1"]["down2"]["down3"] == "three levels deep!");
+  }
+
+  {
+    Hjson::Value root;
+    root["one"] = 1;
+    {
+      auto test1 = root["one"];
+      root.erase(0);
+    }
+    // Unfortunately root will contain an element that was created when test1
+    // was destroyed (when it went out of scope). The problem could be avoided
+    // by explicitly declaring test1 as Hjson::Value instead of "auto". The
+    // auto declaration causes test1 to be declared as Hjson::MapProxy.
+    //assert(root.empty());
   }
 
   {
