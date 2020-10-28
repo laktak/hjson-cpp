@@ -2,6 +2,8 @@
 #include <fstream>
 #include <iostream>
 #include <cstring>
+#include <vector>
+#include <algorithm>
 #include "hjson_test.h"
 
 
@@ -39,12 +41,59 @@ static std::string _readFile(std::string pathBeginning, std::string extra,
 }
 
 
-static Hjson::Value _getTestContent(std::string name) {
-  try {
-    return Hjson::UnmarshalFromFile("assets/" + name + "_test.hjson");
-  } catch (Hjson::file_error e) {}
+static inline void _filterComment(Hjson::Value *val, std::string (Hjson::Value::*fg)() const,
+  void (Hjson::Value::*fs)(const std::string&))
+{
+  auto str = (val->*fg)();
+  str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
+  (val->*fs)(str);
+}
 
-  return Hjson::UnmarshalFromFile("assets/" + name + "_test.json");
+
+static Hjson::Value _getTestContent(std::string name) {
+  Hjson::Value root;
+
+  try {
+    root = Hjson::UnmarshalFromFile("assets/" + name + "_test.hjson");
+  } catch (Hjson::file_error e) {
+    root = Hjson::UnmarshalFromFile("assets/" + name + "_test.json");
+  }
+
+  // Convert EOL to '\n' in comments because the env might have autocrlf=true in git.
+  class Parent {
+  public:
+    Hjson::Value *v;
+    int i;
+  };
+  Hjson::Value *cur = &root;
+  std::vector<Parent> parents;
+  do {
+    _filterComment(cur, &Hjson::Value::get_comment_after, &Hjson::Value::set_comment_after);
+    _filterComment(cur, &Hjson::Value::get_comment_before, &Hjson::Value::set_comment_before);
+    _filterComment(cur, &Hjson::Value::get_comment_inside, &Hjson::Value::set_comment_inside);
+    _filterComment(cur, &Hjson::Value::get_comment_key, &Hjson::Value::set_comment_key);
+
+    if (cur->is_container() && !cur->empty()) {
+      parents.push_back({cur, 0});
+      cur = &(*cur)[0];
+    } else if (!parents.empty()) {
+      ++parents.back().i;
+
+      while (parents.back().i >= parents.back().v->size()) {
+        parents.pop_back();
+        if (parents.empty()) {
+          break;
+        }
+        ++parents.back().i;
+      }
+
+      if (!parents.empty()) {
+        cur = &parents.back().v[0][parents.back().i];
+      }
+    }
+  } while (!parents.empty());
+
+  return root;
 }
 
 
@@ -59,10 +108,8 @@ static void _evaluate(std::string expected, std::string got) {
         break;
       }
     }
-    std::cout << std::endl << "Expected: (size " << expected.size() << ")" <<
-      std::endl << expected << std::endl << std::endl << "Got: (size " <<
-      got.size() << ")" << std::endl << got << std::endl <<
-      std::endl;
+    std::cout << "\nExpected: (size " << expected.size() << ")\n" <<
+      expected << "\n\nGot: (size " << got.size() << ")\n" << got << "\n\n";
     assert(std::strcmp(expected.c_str(), got.c_str()) == 0);
   }
 }

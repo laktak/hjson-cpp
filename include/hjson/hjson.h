@@ -213,6 +213,8 @@ public:
   bool defined() const;
   bool empty() const;
   Type type() const;
+  // Returns true if the type of this Value is Vector or Map.
+  bool is_container() const;
   // Returns true if the type of this Value is Double or Int64.
   bool is_numeric() const;
   size_t size() const;

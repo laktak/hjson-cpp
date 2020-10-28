@@ -1079,6 +1079,11 @@ Value::Type Value::type() const {
 }
 
 
+bool Value::is_container() const {
+  return prv->type == Type::Vector || prv->type == Type::Map;
+}
+
+
 bool Value::is_numeric() const {
   return prv->type == Type::Double || prv->type == Type::Int64;
 }
