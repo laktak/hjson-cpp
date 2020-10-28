@@ -158,7 +158,7 @@ public:
   MapProxy operator[](const std::string&);
   const Value operator[](const char*) const;
   MapProxy operator[](const char*);
-  const Value operator[](int) const;
+  const Value& operator[](int) const;
   Value& operator[](int);
 
   bool operator ==(bool) const;
@@ -210,16 +210,34 @@ public:
   operator const char*() const;
   operator const std::string() const;
 
-  bool defined() const;
-  bool empty() const;
+  // Returns the type of this Value.
   Type type() const;
+  // Returns true if the type of this Value is anything else than Undefined.
+  bool defined() const;
+  // Returns true if this Value is of type Vector or Map and has zero child
+  // elements. Returns true if this Value is of type String and contains
+  // zero characters. Returns true if this Value is of type Undefined or Null.
+  // Returns false in all other cases.
+  bool empty() const;
   // Returns true if the type of this Value is Vector or Map.
   bool is_container() const;
   // Returns true if the type of this Value is Double or Int64.
   bool is_numeric() const;
-  size_t size() const;
+  // Returns true if the entire tree for which this Value is the root is equal
+  // to the entire tree for which the Value parameter is root.
   bool deep_equal(const Value&) const;
+  // Returns a full clone of the tree for which this Value is the root.
   Value clone() const;
+
+  // -- String, Vector and Map specific functions
+  // Removes all child elements from this Value if it is of type Vector or Map.
+  // Sets the content to an empty string if this Value is of type String.
+  void clear();
+  // Returns the number of child elements contained in this Value if this Value
+  // is of type Vector or Map. Returns number of characters if this Value is of
+  // type String. Returns 1 for types Bool, Double or Int64. Returns 0 for
+  // types Undefined or Null.
+  size_t size() const;
 
   // -- Vector and Map specific functions
   // For a Vector, the input argument is the index in the vector for the value
@@ -239,6 +257,22 @@ public:
   // -- Map specific functions
   // Get key by its zero-based insertion index.
   std::string key(int) const;
+  // Returns a reference to the Value specified by the key parameter. Throws
+  // Hjson::index_out_of_bounds if this Value is not a Map or if this Value
+  // does not contain the specified key.
+  const Value& at(const std::string& key) const;
+  // Returns a reference to the Value specified by the key parameter. Throws
+  // Hjson::index_out_of_bounds if this Value is not a Map or if this Value
+  // does not contain the specified key.
+  Value& at(const std::string& key);
+  // Returns a reference to the Value specified by the key parameter. Throws
+  // Hjson::index_out_of_bounds if this Value is not a Map or if this Value
+  // does not contain the specified key.
+  const Value& at(const char *key) const;
+  // Returns a reference to the Value specified by the key parameter. Throws
+  // Hjson::index_out_of_bounds if this Value is not a Map or if this Value
+  // does not contain the specified key.
+  Value& at(const char *key);
   // Iterations are always done in alphabetical key order.
   std::map<std::string, Value>::iterator begin();
   std::map<std::string, Value>::iterator end();
@@ -265,8 +299,10 @@ public:
 
   // Copies all comments from the other Hjson::Value.
   void set_comments(const Value&);
+  // Removes all comments from this Value.
   void clear_comments();
-  // A combination of the assignment operator (=) and set_comments().
+  // A combination of the assignment operator (=) and set_comments(). The
+  // normal assignment operator (=) will not change any comments.
   Value& assign_with_comments(const Value&);
 };
 

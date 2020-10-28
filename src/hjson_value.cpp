@@ -276,6 +276,38 @@ Value& Value::operator=(const Value& other) {
 }
 
 
+const Value& Value::at(const std::string& name) const {
+  if (prv->type == Type::Map) {
+    try {
+      return prv->m->m.at(name);
+    } catch(std::out_of_range e) {}
+  }
+
+  throw index_out_of_bounds("Key not found.");
+}
+
+
+Value& Value::at(const std::string& name) {
+  if (prv->type == Type::Map) {
+    try {
+      return prv->m->m.at(name);
+    } catch(std::out_of_range e) {}
+  }
+
+  throw index_out_of_bounds("Key not found.");
+}
+
+
+const Value& Value::at(const char *name) const {
+  return at(std::string(name));
+}
+
+
+Value& Value::at(const char *name) {
+  return at(std::string(name));
+}
+
+
 const Value Value::operator[](const std::string& name) const {
   if (prv->type == Type::Undefined) {
     return Value();
@@ -318,7 +350,7 @@ MapProxy Value::operator[](const char *input) {
 }
 
 
-const Value Value::operator[](int index) const {
+const Value& Value::operator[](int index) const {
   switch (prv->type)
   {
   case Type::Undefined:
@@ -1185,6 +1217,27 @@ Value Value::clone() const {
   }
 
   return *this;
+}
+
+
+void Value::clear() {
+  switch (prv->type) {
+  case Type::String:
+    prv->s->clear();
+    break;
+
+  case Type::Vector:
+    prv->v->clear();
+    break;
+
+  case Type::Map:
+    prv->m->m.clear();
+    prv->m->v.clear();
+    break;
+
+  default:
+    break;
+  }
 }
 
 

@@ -446,8 +446,18 @@ void test_value() {
     const Hjson::Value& valC = val;
     double fourth = valC.operator[]("fourth");
     assert(fourth == valC["fourth"]);
+    assert(fourth == valC.at("fourth"));
+    try {
+      double fifth = valC.at("fifth");
+      assert(!"Did not throw error when calling at() with invalid key.");
+    } catch(Hjson::index_out_of_bounds e) {}
     fourth = val["fourth"];
     assert(fourth == val["fourth"]);
+    assert(fourth == val.at("fourth"));
+    try {
+      double fifth = val.at("fifth");
+      assert(!"Did not throw error when calling at() with invalid key.");
+    } catch(Hjson::index_out_of_bounds e) {}
     try {
       std::string fourthString = val["fourth"];
       assert(!"Did not throw error when assigning double to string.");
@@ -455,6 +465,7 @@ void test_value() {
     std::string leaft1 = val["first"];
     assert(leaft1 == "leaf1");
     assert(val[std::string("first")] == "leaf1");
+    assert(val.at(std::string("first")) == "leaf1");
     assert(val["first"] == "leaf1");
     assert(!strcmp("leaf1", val["first"]));
 
@@ -484,6 +495,40 @@ void test_value() {
     assert(itConst == valConst.end());
   }
 
+  {
+    Hjson::Value val;
+
+    val["one"] = "uno";
+    val["two"] = "due";
+    assert(val["one"] == "uno");
+    val["one"].clear();
+    assert(val.at("one").empty());
+    assert(val["two"] == "due");
+    auto ptr = &val.at("two");
+    assert(*ptr == "due");
+    val.at("two").clear();
+    assert(val["two"].empty());
+    assert(ptr->size() == 0);
+    val["two"] = 2;
+    assert(*ptr == 2);
+    val.clear();
+    assert(val.empty());
+  }
+
+  {
+    Hjson::Value val;
+
+    val.push_back(3);
+    val.push_back(4);
+    assert(val.size() == 2);
+    auto ptr = &val[0];
+    assert(*ptr == 3);
+    val[0] = 5;
+    assert(*ptr == 5);
+    val.clear();
+    assert(val.empty());
+  }
+
   try {
     Hjson::Value val;
     val["first"] = "leaf1";
@@ -502,6 +547,8 @@ void test_value() {
     Hjson::Value val;
     Hjson::Value undefined = val["down1"]["down2"]["down3"];
     assert(undefined.type() == Hjson::Value::Type::Undefined);
+    // The type of val is set to Map because a MapProxy is created, no easy way
+    // to avoid that.
     //assert(!val.defined());
   }
 
