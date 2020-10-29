@@ -261,6 +261,14 @@ Value::Value(Value&& other)
 }
 
 
+// Even though the MapProxy is temporary, it contains references that are owned
+// by a non-temporary object. Make sure the lvalue constructor is called.
+Value::Value(MapProxy&& other)
+  : Value(other)
+{
+}
+
+
 Value::Value(MapProxy *p)
   : prv(p->prv),
     cm(p->cm)

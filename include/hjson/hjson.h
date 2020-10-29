@@ -151,6 +151,7 @@ public:
   Value(Type);
   Value(const Value&);
   Value(Value&&);
+  Value(MapProxy&&);
   virtual ~Value();
 
   Value& operator =(const Value&);
