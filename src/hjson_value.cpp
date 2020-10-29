@@ -281,7 +281,8 @@ Value::~Value() {
 
 
 Value& Value::operator=(const Value& other) {
-  // So that comments are kept when assigning a Value to a new key in a map.
+  // So that comments are kept when assigning a Value to a new key in a map,
+  // or to a variable that has not been assigned any other value yet.
   if (!this->defined()) {
     this->set_comments(other);
   }
