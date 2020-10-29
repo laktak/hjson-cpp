@@ -269,9 +269,9 @@ Value::Value(MapProxy&& other)
 }
 
 
-Value::Value(MapProxy *p)
-  : prv(p->prv),
-    cm(p->cm)
+Value::Value(std::shared_ptr<ValueImpl> _prv, std::shared_ptr<Comments> _cm)
+  : prv(_prv),
+    cm(_cm)
 {
 }
 
@@ -351,9 +351,9 @@ MapProxy Value::operator[](const std::string& name) {
 
   auto it = prv->m->m.find(name);
   if (it == prv->m->m.end()) {
-    return MapProxy(prv, Value(), name);
+    return MapProxy(prv, name, 0);
   }
-  return MapProxy(prv, it->second, name);
+  return MapProxy(prv, name, &it->second);
 }
 
 
@@ -1765,24 +1765,13 @@ Value& Value::assign_with_comments(const Value& other) {
 }
 
 
-MapProxy::MapProxy(std::shared_ptr<ValueImpl> _parent,
-  Value& _child, const std::string &_key)
-  : parentPrv(_parent),
-    key(_key),
-    wasAssigned(false)
-{
-  // Using the copy constructor would have created a clone of cm, but we just
-  // need the reference.
-  prv = _child.prv;
-  cm = _child.cm;
-}
-
-
-MapProxy::MapProxy(std::shared_ptr<ValueImpl> _parent,
-  Value&& _child, const std::string &_key)
-  : Value(std::move(_child)),
+MapProxy::MapProxy(std::shared_ptr<ValueImpl> _parent, const std::string &_key,
+  Value *_pTarget)
+  : Value(_pTarget ? _pTarget->prv : std::make_shared<ValueImpl>(Type::Undefined),
+      _pTarget ? _pTarget->cm : 0),
     parentPrv(_parent),
     key(_key),
+    pTarget(_pTarget),
     wasAssigned(false)
 {
 }
@@ -1790,10 +1779,12 @@ MapProxy::MapProxy(std::shared_ptr<ValueImpl> _parent,
 
 MapProxy::~MapProxy() {
   if (wasAssigned || !empty()) {
-    auto m = &parentPrv->m->m;
-    auto it = m->find(key);
-
-    if (it == m->end()) {
+    if (pTarget) {
+      // Can have changed due to assignment.
+      pTarget->prv = this->prv;
+      // In case cm was 0 but now has been created by a call to set_comment_x.
+      pTarget->cm = this->cm;
+    } else {
       // If the key is new we must add it to the order vector also.
       parentPrv->m->v.push_back(key);
 
@@ -1803,12 +1794,7 @@ MapProxy::~MapProxy() {
       // Without this requirement, checking for the existence of an element
       // would create an Undefined element for that key if it didn't already exist
       // (e.g. `if (val["key"] == 1) {` would create an element for "key").
-      m->emplace(key, Value(this));
-    } else {
-      // Can have changed due to assignment.
-      it->second.prv = this->prv;
-      // In case cm was 0 but now has been created by a call to set_comment_x.
-      it->second.cm = this->cm;
+      parentPrv->m->m.emplace(key, Value(this->prv, this->cm));
     }
   }
 }

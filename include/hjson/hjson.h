@@ -117,7 +117,7 @@ private:
   std::shared_ptr<ValueImpl> prv;
   std::shared_ptr<Comments> cm;
 
-  Value(MapProxy*);
+  Value(std::shared_ptr<ValueImpl>, std::shared_ptr<Comments>);
 
 public:
   enum class Type {
@@ -315,14 +315,12 @@ class MapProxy : public Value {
 private:
   std::shared_ptr<ValueImpl> parentPrv;
   std::string key;
+  Value *pTarget;
   // True if an explicit assignment has been made to this MapProxy.
   bool wasAssigned;
 
-  MapProxy(std::shared_ptr<ValueImpl> parent, Value& child,
-    const std::string& key);
-
-  MapProxy(std::shared_ptr<ValueImpl> parent, Value&& child,
-    const std::string& key);
+  MapProxy(std::shared_ptr<ValueImpl> parent, const std::string& key,
+    Value *pTarget);
 
   // Make the copy constructor private in order to avoid accidental creation of
   // MapProxy variables like this:
