@@ -293,12 +293,19 @@ static void _str(Encoder *e, Value value, bool noIndent, std::string separator,
 
   case Value::Type::Vector:
     if (value.empty()) {
-      e->oss << separator << "[]";
+      if (e->opt.comments) {
+        e->oss << separator << value.get_comment_before() << "[" <<
+          value.get_comment_inside() << "]" << value.get_comment_after();
+      } else {
+        e->oss << separator << "[]";
+      }
     } else {
       auto indent1 = e->indent;
       e->indent++;
 
-      if (!noIndent && !e->opt.bracesSameLine) {
+      if (!noIndent && !e->opt.bracesSameLine && (!e->opt.comments ||
+        value.get_comment_before().empty()))
+      {
         _writeIndent(e, indent1);
       } else {
         e->oss << separator;
@@ -315,12 +322,18 @@ static void _str(Encoder *e, Value value, bool noIndent, std::string separator,
             e->oss << ",";
           }
 
-          _writeIndent(e, e->indent);
+          if (!e->opt.comments || value[i].get_comment_before().empty()) {
+            _writeIndent(e, e->indent);
+          }
+
           _str(e, value[i], true, "", false, false);
         }
       }
 
-      _writeIndent(e, indent1);
+      if (!e->opt.comments || value[value.size() - 1].get_comment_after().empty()) {
+        _writeIndent(e, indent1);
+      }
+
       e->oss << "]";
 
       e->indent = indent1;

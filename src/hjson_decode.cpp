@@ -525,7 +525,11 @@ static Value _readArray(Parser *p) {
       ciExtra = {};
     }
     if (p->ch == ']') {
+      auto existingAfter = elem.get_comment_after();
       _setComment(elem, &Value::set_comment_after, p, ciAfter, ciExtra);
+      if (!existingAfter.empty()) {
+        elem.set_comment_after(existingAfter + elem.get_comment_after());
+      }
       array.push_back(elem);
       _next(p);
       return array;
@@ -700,7 +704,9 @@ static Value _rootValue(Parser *p) {
     _setComment(ret, &Value::set_comment_before, p, ciBefore);
     auto existingAfter = ret.get_comment_after();
     _setComment(ret, &Value::set_comment_after, p, ciExtra);
-    ret.set_comment_after(existingAfter + ret.get_comment_after());
+    if (!existingAfter.empty()) {
+      ret.set_comment_after(existingAfter + ret.get_comment_after());
+    }
     return ret;
   }
 
