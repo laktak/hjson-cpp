@@ -294,8 +294,7 @@ static void _str(Encoder *e, Value value, bool noIndent, std::string separator,
   case Value::Type::Vector:
     if (value.empty()) {
       if (e->opt.comments) {
-        e->oss << separator << value.get_comment_before() << "[" <<
-          value.get_comment_inside() << "]" << value.get_comment_after();
+        e->oss << separator << "[" << value.get_comment_inside() << "]";
       } else {
         e->oss << separator << "[]";
       }
@@ -343,8 +342,7 @@ static void _str(Encoder *e, Value value, bool noIndent, std::string separator,
   case Value::Type::Map:
     if (value.empty()) {
       if (e->opt.comments) {
-        e->oss << separator << value.get_comment_before() << "{" <<
-          value.get_comment_inside() << "}" << value.get_comment_after();
+        e->oss << separator << "{" << value.get_comment_inside() << "}";
       } else {
         e->oss << separator << "{}";
       }
@@ -411,11 +409,13 @@ static void _objElem(Encoder *e, std::string key, Value value, bool *pIsFirst,
     if ((!e->opt.omitRootBraces || !isRootObject) && !hasComment) {
       _writeIndent(e, e->indent);
     }
-  } else if (!hasComment) {
+  } else {
     if (e->opt.separator) {
       e->oss << ",";
     }
-    _writeIndent(e, e->indent);
+    if (!hasComment) {
+      _writeIndent(e, e->indent);
+    }
   }
 
   if (hasComment) {
