@@ -52,11 +52,14 @@ static inline void _filterComment(Hjson::Value *val, std::string (Hjson::Value::
 
 static Hjson::Value _getTestContent(std::string name) {
   Hjson::Value root;
+  Hjson::DecoderOptions opt;
+
+  opt.comments = true;
 
   try {
-    root = Hjson::UnmarshalFromFile("assets/" + name + "_test.hjson");
+    root = Hjson::UnmarshalFromFile("assets/" + name + "_test.hjson", opt);
   } catch (Hjson::file_error e) {
-    root = Hjson::UnmarshalFromFile("assets/" + name + "_test.json");
+    root = Hjson::UnmarshalFromFile("assets/" + name + "_test.json", opt);
   }
 
   // Convert EOL to '\n' in comments because the env might have autocrlf=true in git.

@@ -69,7 +69,7 @@ class file_error : public std::runtime_error {
 struct DecoderOptions {
   // Keep all comments from the Hjson input, store them in
   // the Hjson::Value objects.
-  bool comments = true;
+  bool comments = false;
 };
 
 
