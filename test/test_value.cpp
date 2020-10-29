@@ -1074,9 +1074,15 @@ arr: [
     Hjson::Value rootA;
     rootA["one"] = "uno";
     rootA["one"].set_comment_after("afterOne");
+
     Hjson::Value val1 = rootA["one"];
     rootA["one"].set_comment_after("afterTwo");
     assert(rootA["one"].get_comment_after() == "afterTwo");
     assert(val1.get_comment_after() == "afterOne");
+
+    Hjson::Value val2(rootA["one"]);
+    rootA["one"].set_comment_after("afterThree");
+    assert(rootA["one"].get_comment_after() == "afterThree");
+    assert(val2.get_comment_after() == "afterTwo");
   }
 }
