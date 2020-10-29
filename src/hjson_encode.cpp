@@ -41,7 +41,7 @@ struct Encoder {
 
 bool startsWithNumber(const char *text, size_t textSize);
 static void _objElem(Encoder *e, std::string key, Value value, bool *pIsFirst,
-  bool isRootObject);
+  bool isRootObject, std::string commentAfterPrevObj);
 
 
 // table of character substitutions
@@ -313,12 +313,18 @@ static void _str(Encoder *e, Value value, bool noIndent, std::string separator,
 
       // Join all of the element texts together, separated with newlines
       bool isFirst = true;
+      std::string commentAfter;
       for (int i = 0; size_t(i) < value.size(); ++i) {
         if (value[i].defined()) {
           if (isFirst) {
             isFirst = false;
-          } else if (e->opt.separator) {
-            e->oss << ",";
+          } else {
+            if (e->opt.separator) {
+              e->oss << ",";
+            }
+            if (e->opt.comments) {
+              e->oss << commentAfter;
+            }
           }
 
           if (!e->opt.comments || value[i].get_comment_before().empty()) {
@@ -326,10 +332,14 @@ static void _str(Encoder *e, Value value, bool noIndent, std::string separator,
           }
 
           _str(e, value[i], true, "", false, false);
+
+          commentAfter = value[i].get_comment_after();
         }
       }
 
-      if (!e->opt.comments || value[value.size() - 1].get_comment_after().empty()) {
+      if (e->opt.comments && !commentAfter.empty()) {
+        e->oss << commentAfter;
+      } else {
         _writeIndent(e, indent1);
       }
 
@@ -363,23 +373,30 @@ static void _str(Encoder *e, Value value, bool noIndent, std::string separator,
 
       // Join all of the member texts together, separated with newlines
       bool isFirst = true;
+      std::string commentAfter;
       if (e->opt.preserveInsertionOrder) {
         size_t limit = value.size();
         for (int index = 0; index < limit; index++) {
           if (value[index].defined()) {
-            _objElem(e, value.key(index), value[index], &isFirst, isRootObject);
+            _objElem(e, value.key(index), value[index], &isFirst, isRootObject, commentAfter);
+            commentAfter = value[index].get_comment_after();
           }
         }
       } else {
         for (auto it : value) {
           if (it.second.defined()) {
-            _objElem(e, it.first, it.second, &isFirst, isRootObject);
+            _objElem(e, it.first, it.second, &isFirst, isRootObject, commentAfter);
+            commentAfter = it.second.get_comment_after();
           }
         }
       }
 
+      if (e->opt.comments && !commentAfter.empty()) {
+        e->oss << commentAfter;
+      }
+
       if (!e->opt.omitRootBraces || !isRootObject) {
-        if (!e->opt.comments || value[value.size() - 1].get_comment_after().empty()) {
+        if (!e->opt.comments || commentAfter.empty()) {
           _writeIndent(e, indent1);
         }
         e->oss << "}";
@@ -393,32 +410,35 @@ static void _str(Encoder *e, Value value, bool noIndent, std::string separator,
     e->oss << separator << value.to_string();
   }
 
-  if (e->opt.comments) {
+  if (e->opt.comments && isRootObject) {
     e->oss << value.get_comment_after();
   }
 }
 
 
 static void _objElem(Encoder *e, std::string key, Value value, bool *pIsFirst,
-  bool isRootObject)
+  bool isRootObject, std::string commentAfterPrevObj)
 {
-  bool hasComment = (e->opt.comments && !value.get_comment_before().empty());
+  bool hasCommentBefore = (e->opt.comments && !value.get_comment_before().empty());
 
   if (*pIsFirst) {
     *pIsFirst = false;
-    if ((!e->opt.omitRootBraces || !isRootObject) && !hasComment) {
+    if ((!e->opt.omitRootBraces || !isRootObject) && !hasCommentBefore) {
       _writeIndent(e, e->indent);
     }
   } else {
     if (e->opt.separator) {
       e->oss << ",";
     }
-    if (!hasComment) {
+    if (e->opt.comments) {
+      e->oss << commentAfterPrevObj;
+    }
+    if (!hasCommentBefore) {
       _writeIndent(e, e->indent);
     }
   }
 
-  if (hasComment) {
+  if (hasCommentBefore) {
     e->oss << value.get_comment_before();
   }
 

@@ -1091,4 +1091,50 @@ arr: [
 
     assert(rootA["one"].get_comment_after() == "afterFour");
   }
+
+  {
+    Hjson::Value root;
+    root["one"] = 1;
+    root["one"].set_comment_after(" # afterOne");
+    root["two"] = 2;
+    root["twoB"] = 2;
+    root["three"] = 3;
+    root["three"].set_comment_before("\n  # beforeThree\n  ");
+    root["three"] = 3; // Should not remove the comment
+    root["three"].set_comment_after("\n  # final comment\n");
+    Hjson::EncoderOptions opt;
+    opt.separator = true;
+    auto str = Hjson::Marshal(root, opt);
+    assert(str == R"({
+  one: 1, # afterOne
+  two: 2,
+  twoB: 2,
+  # beforeThree
+  three: 3
+  # final comment
+})");
+  }
+
+  {
+    Hjson::Value root;
+    root.push_back(1);
+    root[0].set_comment_after(" # afterOne");
+    root.push_back(2);
+    root.push_back(2);
+    root.push_back(3);
+    root[3].set_comment_before("\n  # beforeThree\n  ");
+    root[3] = 3; // Should not remove the comment
+    root[3].set_comment_after("\n  # final comment\n");
+    Hjson::EncoderOptions opt;
+    opt.separator = true;
+    auto str = Hjson::Marshal(root, opt);
+    assert(str == R"([
+  1, # afterOne
+  2,
+  2,
+  # beforeThree
+  3
+  # final comment
+])");
+  }
 }
