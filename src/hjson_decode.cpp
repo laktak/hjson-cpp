@@ -84,6 +84,7 @@ static bool _next(Parser *p) {
   }
 
   p->ch = 0;
+  ++p->at;
 
   return false;
 }
@@ -653,20 +654,20 @@ static Value _hasTrailing(Parser *p, CommentInfo *ci) {
 static Value _rootValue(Parser *p) {
   Value ret;
   std::string errMsg;
-  CommentInfo ciAfter;
+  CommentInfo ciExtra;
 
   auto ciBefore = _white(p);
 
   switch (p->ch) {
   case '{':
     ret = _readObject(p, false);
-    if (_hasTrailing(p, &ciAfter)) {
+    if (_hasTrailing(p, &ciExtra)) {
       throw syntax_error(_errAt(p, "Syntax error, found trailing characters"));
     }
     break;
   case '[':
     ret = _readArray(p);
-    if (_hasTrailing(p, &ciAfter)) {
+    if (_hasTrailing(p, &ciExtra)) {
       throw syntax_error(_errAt(p, "Syntax error, found trailing characters"));
     }
     break;
@@ -676,7 +677,7 @@ static Value _rootValue(Parser *p) {
     // assume we have a root object without braces
     try {
       ret = _readObject(p, true);
-      if (_hasTrailing(p, &ciAfter)) {
+      if (_hasTrailing(p, &ciExtra)) {
         // Syntax error, or maybe a single JSON value.
         ret = Value();
       }
@@ -689,7 +690,7 @@ static Value _rootValue(Parser *p) {
     // test if we are dealing with a single JSON value instead (true/false/null/num/"")
     _resetAt(p);
     ret = _readValue(p);
-    if (_hasTrailing(p, &ciAfter)) {
+    if (_hasTrailing(p, &ciExtra)) {
       // Syntax error.
       ret = Value();
     }
@@ -697,7 +698,9 @@ static Value _rootValue(Parser *p) {
 
   if (ret.defined()) {
     _setComment(ret, &Value::set_comment_before, p, ciBefore);
-    _setComment(ret, &Value::set_comment_after, p, ciAfter);
+    auto existingAfter = ret.get_comment_after();
+    _setComment(ret, &Value::set_comment_after, p, ciExtra);
+    ret.set_comment_after(existingAfter + ret.get_comment_after());
     return ret;
   }
 
