@@ -1,0 +1,6 @@
+{
+  "key1": "a string value // still part of the string",
+  "key2": "a string value",
+  "key3": 3,
+  "key4": 4
+}

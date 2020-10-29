@@ -4,6 +4,7 @@ comments_test.hjson
 comments2_test.hjson
 comments3_test.hjson
 comments4_test.hjson
+comments5_test.hjson
 empty_test.hjson
 failCharset1_test.hjson
 failJSON02_test.json

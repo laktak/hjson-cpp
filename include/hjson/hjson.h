@@ -155,6 +155,7 @@ public:
   virtual ~Value();
 
   Value& operator =(const Value&);
+  Value& operator =(Value&&);
 
   const Value operator[](const std::string&) const;
   MapProxy operator[](const std::string&);
@@ -306,6 +307,7 @@ public:
   // A combination of the assignment operator (=) and set_comments(). The
   // normal assignment operator (=) will not change any comments.
   Value& assign_with_comments(const Value&);
+  Value& assign_with_comments(Value&&);
 };
 
 
@@ -326,13 +328,16 @@ private:
   // MapProxy variables like this:
   //   auto myVal = val["one"];
   MapProxy(const MapProxy&) = default;
+  MapProxy(Value&&);
 
 public:
   ~MapProxy();
   MapProxy& operator =(const MapProxy&);
   MapProxy& operator =(const Value&);
+  MapProxy& operator =(Value&&);
   MapProxy& assign_with_comments(const MapProxy&);
   MapProxy& assign_with_comments(const Value&);
+  MapProxy& assign_with_comments(Value&&);
 };
 
 

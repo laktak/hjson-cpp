@@ -575,6 +575,7 @@ static Value _readObject(Parser *p, bool withoutBraces) {
     if (!elem.get_comment_before().empty()) {
       elem.set_comment_key(elem.get_comment_key() +
         elem.get_comment_before());
+      elem.set_comment_before("");
     }
     _setComment(elem, &Value::set_comment_before, p, ciBefore, ciExtra);
     auto ciAfter = _white(p);
@@ -588,12 +589,16 @@ static Value _readObject(Parser *p, bool withoutBraces) {
       ciExtra = {};
     }
     if (p->ch == '}' && !withoutBraces) {
+      auto existingAfter = elem.get_comment_after();
       _setComment(elem, &Value::set_comment_after, p, ciAfter, ciExtra);
-      object[key].assign_with_comments(elem);
+      if (!existingAfter.empty()) {
+        elem.set_comment_after(existingAfter + elem.get_comment_after());
+      }
+      object[key].assign_with_comments(std::move(elem));
       _next(p);
       return object;
     }
-    object[key].assign_with_comments(elem);
+    object[key].assign_with_comments(std::move(elem));
     ciBefore = ciAfter;
   }
 

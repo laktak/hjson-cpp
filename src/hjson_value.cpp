@@ -293,6 +293,19 @@ Value& Value::operator=(const Value& other) {
 }
 
 
+Value& Value::operator=(Value&& other) {
+  // So that comments are kept when assigning a Value to a new key in a map,
+  // or to a variable that has not been assigned any other value yet.
+  if (!this->defined()) {
+    this->cm = other.cm;
+  }
+
+  this->prv = other.prv;
+
+  return *this;
+}
+
+
 const Value& Value::at(const std::string& name) const {
   if (prv->type == Type::Map) {
     try {
@@ -1765,6 +1778,16 @@ Value& Value::assign_with_comments(const Value& other) {
 }
 
 
+Value& Value::assign_with_comments(Value&& other) {
+  // If this object is of type Undefined set_comments() will be called in the
+  // assignment operator, no need to call it here.
+  if (defined()) {
+    cm = other.cm;
+  }
+  return operator=(std::move(other));
+}
+
+
 MapProxy::MapProxy(std::shared_ptr<ValueImpl> _parent, const std::string &_key,
   Value *_pTarget)
   : Value(_pTarget ? _pTarget->prv : std::make_shared<ValueImpl>(Type::Undefined),
@@ -1773,6 +1796,12 @@ MapProxy::MapProxy(std::shared_ptr<ValueImpl> _parent, const std::string &_key,
     key(_key),
     pTarget(_pTarget),
     wasAssigned(false)
+{
+}
+
+
+MapProxy::MapProxy(Value&& other)
+  : Value(std::move(other))
 {
 }
 
@@ -1812,6 +1841,13 @@ MapProxy& MapProxy::operator =(const Value& other) {
 }
 
 
+MapProxy& MapProxy::operator =(Value&& other) {
+  Value::operator=(std::move(other));
+  wasAssigned = true;
+  return *this;
+}
+
+
 MapProxy& MapProxy::assign_with_comments(const MapProxy& other) {
   return assign_with_comments(static_cast<Value>(other));
 }
@@ -1824,6 +1860,16 @@ MapProxy& MapProxy::assign_with_comments(const Value& other) {
     set_comments(other);
   }
   return operator=(other);
+}
+
+
+MapProxy& MapProxy::assign_with_comments(Value&& other) {
+  // If this object is of type Undefined set_comments() will be called in the
+  // assignment operator, no need to call it here.
+  if (defined()) {
+    cm = other.cm;
+  }
+  return operator=(std::move(other));
 }
 
 

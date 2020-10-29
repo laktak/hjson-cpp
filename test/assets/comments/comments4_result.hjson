@@ -3,6 +3,7 @@
   a string value // still part of the string
   "a string value" // not part of the string
   // before3
+
   3 # after3
   # before4
   /*before4b*/4/*after4*/

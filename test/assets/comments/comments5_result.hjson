@@ -1,0 +1,14 @@
+// before
+/* before2 */ { #before1
+  key1:/*key1keycm*/a string value // still part of the string
+  key2:   /* key2keycm  */   "a string value" // not part of the string
+  // before3
+
+  key3: 3 # after3
+  # before4
+  /*before4b*/key4: 4/*after4*/
+  #after4b
+}
+// after2
+
+/* after3 */
