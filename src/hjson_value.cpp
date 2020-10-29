@@ -130,12 +130,6 @@ Value::ValueImpl::~ValueImpl() {
 }
 
 
-Value::Value(std::shared_ptr<ValueImpl> _prv)
-  : prv(_prv)
-{
-}
-
-
 // Sacrifice efficiency for predictability: It is allowed to do bracket
 // assignment on an Undefined Value, and thereby turn it into a Map Value.
 // A Map Value is passed by reference, therefore an Undefined Value should also
@@ -260,6 +254,20 @@ Value::Value(const Value& other)
 }
 
 
+Value::Value(Value&& other)
+  : prv(other.prv),
+    cm(other.cm)
+{
+}
+
+
+Value::Value(MapProxy *p)
+  : prv(p->prv),
+    cm(p->cm)
+{
+}
+
+
 Value::~Value() {
 }
 
@@ -334,7 +342,7 @@ MapProxy Value::operator[](const std::string& name) {
 
   auto it = prv->m->m.find(name);
   if (it == prv->m->m.end()) {
-    return MapProxy(prv, Value(Type::Undefined), name);
+    return MapProxy(prv, Value(), name);
   }
   return MapProxy(prv, it->second, name);
 }
@@ -1749,8 +1757,21 @@ Value& Value::assign_with_comments(const Value& other) {
 
 
 MapProxy::MapProxy(std::shared_ptr<ValueImpl> _parent,
-  Value _child, const std::string &_key)
-  : Value(_child),
+  Value& _child, const std::string &_key)
+  : parentPrv(_parent),
+    key(_key),
+    wasAssigned(false)
+{
+  // Using the copy constructor would have created a clone of cm, but we just
+  // need the reference.
+  prv = _child.prv;
+  cm = _child.cm;
+}
+
+
+MapProxy::MapProxy(std::shared_ptr<ValueImpl> _parent,
+  Value&& _child, const std::string &_key)
+  : Value(std::move(_child)),
     parentPrv(_parent),
     key(_key),
     wasAssigned(false)
@@ -1773,13 +1794,12 @@ MapProxy::~MapProxy() {
       // Without this requirement, checking for the existence of an element
       // would create an Undefined element for that key if it didn't already exist
       // (e.g. `if (val["key"] == 1) {` would create an element for "key").
-      m[0][key] = *this;
-      // In case set_comment_x was called on the MapProxy.
-      m[0][key].cm = std::move(this->cm);
+      m->emplace(key, Value(this));
     } else {
-      it->second = *this;
-      // In case set_comment_x was called on the MapProxy.
-      it->second.cm = std::move(this->cm);
+      // Can have changed due to assignment.
+      it->second.prv = this->prv;
+      // In case cm was 0 but now has been created by a call to set_comment_x.
+      it->second.cm = this->cm;
     }
   }
 }

@@ -115,9 +115,9 @@ private:
   class Comments;
 
   std::shared_ptr<ValueImpl> prv;
-  std::unique_ptr<Comments> cm;
+  std::shared_ptr<Comments> cm;
 
-  Value(std::shared_ptr<ValueImpl>);
+  Value(MapProxy*);
 
 public:
   enum class Type {
@@ -150,6 +150,7 @@ public:
   Value(const std::string&);
   Value(Type);
   Value(const Value&);
+  Value(Value&&);
   virtual ~Value();
 
   Value& operator =(const Value&);
@@ -316,7 +317,10 @@ private:
   // True if an explicit assignment has been made to this MapProxy.
   bool wasAssigned;
 
-  MapProxy(std::shared_ptr<ValueImpl> parent, Value child,
+  MapProxy(std::shared_ptr<ValueImpl> parent, Value& child,
+    const std::string& key);
+
+  MapProxy(std::shared_ptr<ValueImpl> parent, Value&& child,
     const std::string& key);
 
 public:
