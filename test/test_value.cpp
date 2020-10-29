@@ -564,14 +564,10 @@ void test_value() {
     Hjson::Value root;
     root["one"] = 1;
     {
-      auto test1 = root["one"];
+      Hjson::Value test1 = root["one"];
       root.erase(0);
     }
-    // Unfortunately root will contain an element that was created when test1
-    // was destroyed (when it went out of scope). The problem could be avoided
-    // by explicitly declaring test1 as Hjson::Value instead of "auto". The
-    // auto declaration causes test1 to be declared as Hjson::MapProxy.
-    //assert(root.empty());
+    assert(root.empty());
   }
 
   {
@@ -591,7 +587,7 @@ void test_value() {
   {
     Hjson::Value root;
     root["key1"]["key2"]["key3"]["A"] = 4;
-    auto val2 = root["key1"]["key2"]["key3"];
+    Hjson::Value val2 = root["key1"]["key2"]["key3"];
     val2["B"] = 5;
     assert(root["key1"]["key2"]["key3"]["B"] == 5);
   }
@@ -1075,14 +1071,24 @@ arr: [
     rootA["one"] = "uno";
     rootA["one"].set_comment_after("afterOne");
 
-    Hjson::Value val1 = rootA["one"];
-    rootA["one"].set_comment_after("afterTwo");
-    assert(rootA["one"].get_comment_after() == "afterTwo");
-    assert(val1.get_comment_after() == "afterOne");
+    {
+      Hjson::Value val1 = rootA["one"];
+      rootA["one"].set_comment_after("afterTwo");
+      assert(rootA["one"].get_comment_after() == "afterTwo");
+      assert(val1.get_comment_after() == "afterOne");
 
-    Hjson::Value val2(rootA["one"]);
-    rootA["one"].set_comment_after("afterThree");
-    assert(rootA["one"].get_comment_after() == "afterThree");
-    assert(val2.get_comment_after() == "afterTwo");
+      Hjson::Value val2(rootA["one"]);
+      rootA["one"].set_comment_after("afterThree");
+      assert(rootA["one"].get_comment_after() == "afterThree");
+      assert(val2.get_comment_after() == "afterTwo");
+
+      // Comments are not changed in this assignment, val2 is not undefined.
+      val2 = rootA["one"];
+      rootA["one"].set_comment_after("afterFour");
+      assert(rootA["one"].get_comment_after() == "afterFour");
+      assert(val2.get_comment_after() == "afterTwo");
+    }
+
+    assert(rootA["one"].get_comment_after() == "afterFour");
   }
 }

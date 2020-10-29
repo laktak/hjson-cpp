@@ -324,6 +324,11 @@ private:
   MapProxy(std::shared_ptr<ValueImpl> parent, Value&& child,
     const std::string& key);
 
+  // Make the copy constructor private in order to avoid accidental creation of
+  // MapProxy variables like this:
+  //   auto myVal = val["one"];
+  MapProxy(const MapProxy&) = default;
+
 public:
   ~MapProxy();
   MapProxy& operator =(const MapProxy&);
